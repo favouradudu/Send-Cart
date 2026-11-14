@@ -117,14 +117,65 @@ export function VendorDashboard() {
         supabase.from("orders").select("id, order_number, customer_name, customer_phone, delivery_zone, total, status, created_at").eq("vendor_id", userId).order("created_at", { ascending: false }).limit(200),
       ]);
       if (!active) return;
-      if (profileResult.error) toast.error("We couldn’t load your shop details.");
       if (catalogResult.error) toast.error("We couldn’t load your products.");
       if (orderResult.error) toast.error("We couldn’t load your orders.");
-      if (profileResult.data) {
-        const nextProfile = profileResult.data as unknown as ShopProfile;
-        setProfile(nextProfile);
-        setSettings(nextProfile);
+
+      let currentProfile: ShopProfile | null = (profileResult.data as unknown as ShopProfile) ?? null;
+
+      // Auto-provision profile if authenticated user has no profile row yet
+      if (!currentProfile) {
+        const { data: authUserData } = await supabase.auth.getUser();
+        const userEmail = authUserData.user?.email ?? "";
+        const emailSlug = userEmail.split("@")[0].replace(/[^a-z0-9]/gi, "").toLowerCase() || "shop";
+        const autoSlug = `${emailSlug}-${userId.slice(0, 6)}`;
+        const storeName = emailSlug ? emailSlug.charAt(0).toUpperCase() + emailSlug.slice(1) + " Store" : "My Boutique";
+
+        const newProfile = {
+          id: userId,
+          store_slug: autoSlug,
+          store_name: storeName,
+          bio: "Welcome! Browse our collection and order directly on WhatsApp.",
+          avatar_url: "",
+          whatsapp_phone: "",
+          instagram_handle: "",
+          bank_name: "Access Bank",
+          bank_account: "",
+          bank_account_name: "",
+          delivery_zones: {
+            "Lagos Mainland": { fee: 2500 },
+            "Lagos Island": { fee: 3500 },
+            "Outside Lagos": { fee: 6000 },
+          },
+          store_active: true,
+          plan: "free" as const,
+          order_credits: 0,
+        };
+
+        const { data: created, error: createError } = await supabase
+          .from("profiles")
+          .insert(newProfile)
+          .select()
+          .maybeSingle();
+
+        if (!createError && created) {
+          currentProfile = created as unknown as ShopProfile;
+          toast.success("Welcome! We set up your starter shop.");
+        } else {
+          // If insert failed due to network or duplicate, try one final fetch
+          const { data: refetched } = await supabase.from("profiles").select("*").eq("id", userId).maybeSingle();
+          if (refetched) {
+            currentProfile = refetched as unknown as ShopProfile;
+          } else {
+            toast.error("Could not set up your profile automatically. Please refresh.");
+          }
+        }
       }
+
+      if (currentProfile) {
+        setProfile(currentProfile);
+        setSettings(currentProfile);
+      }
+
       setProducts((catalogResult.data ?? []) as unknown as ShopProduct[]);
       const orderRows = (orderResult.data ?? []) as unknown as OrderRecord[];
       setOrders(orderRows);
@@ -139,7 +190,7 @@ export function VendorDashboard() {
       active = false;
     };
   }, [userId]);
-
+      
   const visibleProducts = useMemo(() => products.filter((product) => product.visible), [products]);
   const pendingOrders = orders.filter((order) => order.status === "pending_confirmation").length;
   const storeLink = typeof window === "undefined" || !profile ? "" : `${window.location.origin}/s/${profile.store_slug}`;
