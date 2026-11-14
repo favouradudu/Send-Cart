@@ -648,3 +648,102 @@
     color: var(--color-foreground);
   }
 }
+
+/* Interactive Variant Pills on Product Cards */
+.variant-pill {
+  min-width: 24px;
+  height: 22px;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--border);
+  padding: 0 6px;
+  color: var(--muted-foreground);
+  font-size: 8px;
+  background: var(--background);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  border-radius: 2px;
+}
+.variant-pill:hover {
+  border-color: var(--foreground);
+  color: var(--foreground);
+}
+.variant-pill.is-selected {
+  background: var(--foreground);
+  color: var(--background);
+  border-color: var(--foreground);
+  font-weight: 600;
+}
+
+/* Variant Picker Bottom Sheet */
+.variant-picker-sheet {
+  padding: 24px clamp(16px, 4vw, 28px);
+  border-radius: 12px 12px 0 0;
+  max-height: 85vh;
+  overflow-y: auto;
+}
+.variant-picker-product {
+  display: flex;
+  gap: 14px;
+  align-items: center;
+  padding: 12px 0 16px;
+  border-bottom: 1px solid var(--border);
+}
+.variant-picker-product img {
+  width: 64px;
+  height: 80px;
+  object-fit: cover;
+  border-radius: 2px;
+  background: var(--muted);
+}
+.variant-picker-details h3 {
+  font-family: var(--font-display);
+  font-size: 18px;
+  margin: 3px 0;
+  font-weight: 400;
+}
+.variant-picker-details .price {
+  font-weight: 600;
+  font-size: 13px;
+}
+.variant-options-group {
+  padding: 18px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.variant-options-label {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--muted-foreground);
+}
+.variant-options-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.variant-option-btn {
+  min-width: 44px;
+  height: 38px;
+  padding: 0 14px;
+  border: 1px solid var(--border);
+  background: var(--background);
+  font-size: 12px;
+  cursor: pointer;
+  border-radius: 2px;
+  transition: all 0.15s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.variant-option-btn:hover {
+  border-color: var(--foreground);
+}
+.variant-option-btn.is-active {
+  background: var(--foreground);
+  color: var(--background);
+  border-color: var(--foreground);
+  font-weight: 600;
+}
+
