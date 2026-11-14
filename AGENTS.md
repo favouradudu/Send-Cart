@@ -28,3 +28,6 @@ use the editor.
   own key and store it in Secrets.
 - **Secrets.** Lovable manages them. Do not put secret values in the repo.
 <!-- LOVABLE:END -->
+
+## App architecture
+- Keep the storefront public and shareable, with seller management behind sign-in; public orders are validated and recorded atomically in the database so current prices, stock, delivery fees, and order limits are authoritative.
