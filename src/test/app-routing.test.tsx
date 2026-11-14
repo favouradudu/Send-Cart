@@ -14,4 +14,18 @@ describe("App routing", () => {
 
     expect(matches.at(-1)?.routeId).not.toBe(rootRouteId);
   });
+
+  it("matches the named public shop page", () => {
+    const router = createRouter({ routeTree, context: { queryClient: new QueryClient() } });
+    const matches = router.matchRoutes("/s/aura-threads");
+
+    expect(matches.at(-1)?.routeId).toBe("/s/$storeSlug");
+  });
+
+  it("matches the seller dashboard", () => {
+    const router = createRouter({ routeTree, context: { queryClient: new QueryClient() } });
+    const matches = router.matchRoutes("/dashboard");
+
+    expect(matches.at(-1)?.routeId).toBe("/dashboard");
+  });
 });
