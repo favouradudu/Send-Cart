@@ -14,13 +14,229 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      order_items: {
+        Row: {
+          id: string
+          order_id: string
+          product_id: string
+          product_name: string
+          quantity: number
+          unit_price: number
+          variant: string
+        }
+        Insert: {
+          id?: string
+          order_id: string
+          product_id: string
+          product_name: string
+          quantity: number
+          unit_price: number
+          variant?: string
+        }
+        Update: {
+          id?: string
+          order_id?: string
+          product_id?: string
+          product_name?: string
+          quantity?: number
+          unit_price?: number
+          variant?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "order_items_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "order_items_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      orders: {
+        Row: {
+          created_at: string
+          customer_name: string
+          customer_phone: string
+          delivery_fee: number
+          delivery_zone: string
+          id: string
+          order_number: string
+          status: string
+          subtotal: number
+          total: number
+          vendor_id: string
+        }
+        Insert: {
+          created_at?: string
+          customer_name: string
+          customer_phone: string
+          delivery_fee: number
+          delivery_zone: string
+          id?: string
+          order_number?: string
+          status?: string
+          subtotal: number
+          total: number
+          vendor_id: string
+        }
+        Update: {
+          created_at?: string
+          customer_name?: string
+          customer_phone?: string
+          delivery_fee?: number
+          delivery_zone?: string
+          id?: string
+          order_number?: string
+          status?: string
+          subtotal?: number
+          total?: number
+          vendor_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "orders_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      products: {
+        Row: {
+          category: string
+          compare_at_price: number | null
+          created_at: string
+          description: string
+          id: string
+          image_url: string
+          name: string
+          price: number
+          stock: number
+          updated_at: string
+          variants: Json
+          vendor_id: string
+          visible: boolean
+        }
+        Insert: {
+          category?: string
+          compare_at_price?: number | null
+          created_at?: string
+          description?: string
+          id?: string
+          image_url?: string
+          name: string
+          price: number
+          stock?: number
+          updated_at?: string
+          variants?: Json
+          vendor_id: string
+          visible?: boolean
+        }
+        Update: {
+          category?: string
+          compare_at_price?: number | null
+          created_at?: string
+          description?: string
+          id?: string
+          image_url?: string
+          name?: string
+          price?: number
+          stock?: number
+          updated_at?: string
+          variants?: Json
+          vendor_id?: string
+          visible?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "products_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          avatar_url: string
+          bank_account: string
+          bank_account_name: string
+          bank_name: string
+          bio: string
+          created_at: string
+          delivery_zones: Json
+          id: string
+          instagram_handle: string
+          order_credits: number
+          plan: string
+          store_active: boolean
+          store_name: string
+          store_slug: string
+          updated_at: string
+          whatsapp_phone: string
+        }
+        Insert: {
+          avatar_url?: string
+          bank_account?: string
+          bank_account_name?: string
+          bank_name?: string
+          bio?: string
+          created_at?: string
+          delivery_zones?: Json
+          id: string
+          instagram_handle?: string
+          order_credits?: number
+          plan?: string
+          store_active?: boolean
+          store_name?: string
+          store_slug: string
+          updated_at?: string
+          whatsapp_phone?: string
+        }
+        Update: {
+          avatar_url?: string
+          bank_account?: string
+          bank_account_name?: string
+          bank_name?: string
+          bio?: string
+          created_at?: string
+          delivery_zones?: Json
+          id?: string
+          instagram_handle?: string
+          order_credits?: number
+          plan?: string
+          store_active?: boolean
+          store_name?: string
+          store_slug?: string
+          updated_at?: string
+          whatsapp_phone?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      place_store_order: {
+        Args: {
+          p_customer_name: string
+          p_customer_phone: string
+          p_delivery_zone: string
+          p_items: Json
+          p_vendor_id: string
+        }
+        Returns: Json
+      }
     }
     Enums: {
       [_ in never]: never
