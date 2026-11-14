@@ -60,6 +60,9 @@ export function Storefront({ storeSlug }: { storeSlug: string }) {
   const [category, setCategory] = useState("All pieces");
   const [cartOpen, setCartOpen] = useState(false);
   const [checkoutOpen, setCheckoutOpen] = useState(false);
+  const [selectedVariants, setSelectedVariants] = useState<Record<string, string>>({});
+  const [pickerProduct, setPickerProduct] = useState<ShopProduct | null>(null);
+  const [pickerVariant, setPickerVariant] = useState<string>("");
   const [customerName, setCustomerName] = useState("");
   const [customerPhone, setCustomerPhone] = useState("");
   const [deliveryZone, setDeliveryZone] = useState("Lagos Mainland");
@@ -121,9 +124,9 @@ export function Storefront({ storeSlug }: { storeSlug: string }) {
   const subtotal = cart.reduce((sum, item) => sum + item.product.price * item.quantity, 0);
   const deliveryFee = profile.delivery_zones[deliveryZone]?.fee ?? 0;
 
-  const addToCart = (product: ShopProduct) => {
+  const addToCart = (product: ShopProduct, chosenVariant?: string) => {
     if (product.stock < 1) return;
-    const variant = product.variants[0] ?? "One size";
+    const variant = chosenVariant ?? selectedVariants[product.id] ?? product.variants[0] ?? "One size";
     setCart((current) => {
       const existing = current.find((line) => line.product.id === product.id && line.variant === variant);
       if (existing && existing.quantity >= product.stock) {
@@ -138,7 +141,17 @@ export function Storefront({ storeSlug }: { storeSlug: string }) {
           )
         : [...current, { product, quantity: 1, variant }];
     });
-    toast.success("Added to your bag");
+    toast.success(`Added ${product.name} (${variant}) to your bag`);
+  };
+
+  const handleCardAdd = (product: ShopProduct) => {
+    if (product.stock < 1) return;
+    if (product.variants.length > 1) {
+      setPickerProduct(product);
+      setPickerVariant(selectedVariants[product.id] ?? product.variants[0] ?? "");
+    } else {
+      addToCart(product, product.variants[0] ?? "One size");
+    }
   };
 
   const changeQuantity = (line: CartLine, delta: number) => {
@@ -294,24 +307,72 @@ export function Storefront({ storeSlug }: { storeSlug: string }) {
             <div className="empty-store"><Store aria-hidden="true" /><p>This little shop is getting ready. Visit again soon.</p></div>
           ) : (
             <div className="product-grid">
-              {filteredProducts.map((product, index) => (
-                <article className="product-card" key={product.id}>
-                  <button className="product-photo-button" onClick={() => addToCart(product)} disabled={product.stock < 1} aria-label={`Add ${product.name} to bag`}>
-                    <img src={product.image_url} alt={product.name} width={1024} height={1280} loading={index > 1 ? "lazy" : undefined} />
-                    {product.compare_at_price && <span className="photo-tag">A little less</span>}
-                    <span className="quick-add"><Plus aria-hidden="true" /> Add to bag</span>
-                    <span className="stock-counter">{product.stock < 1 ? "Just sold out" : `${product.stock} left`}</span>
-                  </button>
-                  <div className="product-details">
-                    <div><span className="product-category">{product.category}</span><h3>{product.name}</h3></div>
-                    <div className="product-price"><span>{formatNaira(product.price)}</span>{product.compare_at_price && <del>{formatNaira(product.compare_at_price)}</del>}</div>
-                  </div>
-                  <div className="product-variants" aria-label={`Available options: ${product.variants.join(", ")}`}>
-                    {product.variants.map((variant) => <span key={variant}>{variant}</span>)}
-                    <button aria-label={`Add ${product.name} to favourites`} className="save-product" onClick={() => toast.success("We’ll keep this one in mind.")}><Heart /></button>
-                  </div>
-                </article>
-              ))}
+              {filteredProducts.map((product, index) => {
+                const currentVariant = selectedVariants[product.id] ?? product.variants[0] ?? "";
+                return (
+                  <article className="product-card" key={product.id}>
+                    <button
+                      className="product-photo-button"
+                      onClick={() => handleCardAdd(product)}
+                      disabled={product.stock < 1}
+                      aria-label={`Add ${product.name} to bag`}
+                    >
+                      <img
+                        src={product.image_url}
+                        alt={product.name}
+                        width={1024}
+                        height={1280}
+                        loading={index > 1 ? "lazy" : undefined}
+                      />
+                      {product.compare_at_price && <span className="photo-tag">A little less</span>}
+                      <span className="quick-add">
+                        <Plus aria-hidden="true" /> Add to bag {currentVariant ? `· ${currentVariant}` : ""}
+                      </span>
+                      <span className="stock-counter">
+                        {product.stock < 1 ? "Just sold out" : `${product.stock} left`}
+                      </span>
+                    </button>
+                    <div className="product-details">
+                      <div>
+                        <span className="product-category">{product.category}</span>
+                        <h3>{product.name}</h3>
+                      </div>
+                      <div className="product-price">
+                        <span>{formatNaira(product.price)}</span>
+                        {product.compare_at_price && <del>{formatNaira(product.compare_at_price)}</del>}
+                      </div>
+                    </div>
+                    <div className="product-variants" role="group" aria-label={`Options for ${product.name}`}>
+                      {product.variants.map((variant) => {
+                        const isSelected = currentVariant === variant;
+                        return (
+                          <button
+                            key={variant}
+                            type="button"
+                            className={`variant-pill ${isSelected ? "is-selected" : ""}`}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setSelectedVariants((curr) => ({ ...curr, [product.id]: variant }));
+                              toast.success(`Selected ${variant}`);
+                            }}
+                            aria-pressed={isSelected}
+                            aria-label={`Select ${variant} for ${product.name}`}
+                          >
+                            {variant}
+                          </button>
+                        );
+                      })}
+                      <button
+                        aria-label={`Add ${product.name} to favourites`}
+                        className="save-product"
+                        onClick={() => toast.success("We’ll keep this one in mind.")}
+                      >
+                        <Heart />
+                      </button>
+                    </div>
+                  </article>
+                );
+              })}
             </div>
           )}
         </section>
@@ -325,7 +386,64 @@ export function Storefront({ storeSlug }: { storeSlug: string }) {
 
         <footer className="store-footer"><a className="brand-wordmark" href="#top">aura<span>threads</span></a><span>Thoughtfully found. Personally sent from Lagos.</span><a href="/dashboard">Your shop could look like this <ArrowUpRight /></a></footer>
       </main>
-
+      
+      {/* Variant Selection Bottom Sheet */}
+      <Sheet open={Boolean(pickerProduct)} onOpenChange={(open) => { if (!open) setPickerProduct(null); }}>
+        <SheetContent side="bottom" className="variant-picker-sheet">
+          {pickerProduct && (
+            <>
+              <SheetHeader className="cart-sheet-heading">
+                <p className="eyebrow">Choose your fit</p>
+                <SheetTitle>Select an option</SheetTitle>
+                <SheetDescription>Pick your preferred size or color before adding to bag.</SheetDescription>
+              </SheetHeader>
+              <div className="variant-picker-product">
+                <img src={pickerProduct.image_url} alt="" width={64} height={80} />
+                <div className="variant-picker-details">
+                  <span className="product-category">{pickerProduct.category}</span>
+                  <h3>{pickerProduct.name}</h3>
+                  <span className="price">{formatNaira(pickerProduct.price)}</span>
+                </div>
+              </div>
+              <div className="variant-options-group">
+                <span className="variant-options-label">Available options</span>
+                <div className="variant-options-grid" role="radiogroup">
+                  {pickerProduct.variants.map((v) => {
+                    const active = pickerVariant === v;
+                    return (
+                      <button
+                        key={v}
+                        type="button"
+                        role="radio"
+                        aria-checked={active}
+                        className={`variant-option-btn ${active ? "is-active" : ""}`}
+                        onClick={() => setPickerVariant(v)}
+                      >
+                        {v}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+              <SheetFooter className="cart-sheet-footer">
+                <Button
+                  className="continue-checkout"
+                  disabled={!pickerVariant}
+                  onClick={() => {
+                    if (pickerProduct && pickerVariant) {
+                      addToCart(pickerProduct, pickerVariant);
+                      setSelectedVariants((curr) => ({ ...curr, [pickerProduct.id]: pickerVariant }));
+                      setPickerProduct(null);
+                    }
+                  }}
+                >
+                  Add {pickerVariant ? `(${pickerVariant}) ` : ""}to bag · {formatNaira(pickerProduct.price)}
+                </Button>
+              </SheetFooter>
+            </>
+          )}
+        </SheetContent>
+      </Sheet>                                
       <Sheet open={cartOpen} onOpenChange={(open) => { setCartOpen(open); if (open) setOrder(null); }}>
         <SheetContent side="bottom" className="store-cart-sheet">
           {order ? (
