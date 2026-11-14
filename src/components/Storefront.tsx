@@ -1,0 +1,377 @@
+import { useEffect, useMemo, useState } from "react";
+import {
+  ArrowDownRight,
+  ArrowLeft,
+  ArrowRight,
+  ArrowUpRight,
+  Check,
+  ChevronRight,
+  CircleCheck,
+  Heart,
+  Instagram,
+  Menu,
+  Minus,
+  Plus,
+  ShieldCheck,
+  ShoppingBag,
+  Sparkles,
+  Store,
+  X,
+} from "lucide-react";
+import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetFooter,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
+import {
+  DEMO_PROFILE,
+  DEMO_PRODUCTS,
+  DEMO_SLUG,
+  DEMO_VENDOR_PHONE,
+  buildWhatsAppOrderMessage,
+  formatNaira,
+  type ShopProduct,
+  type ShopProfile,
+} from "@/lib/shop";
+
+type CartLine = { product: ShopProduct; quantity: number; variant: string };
+type PlacedOrder = {
+  order_number: string;
+  customer_name: string;
+  customer_phone: string;
+  delivery_zone: string;
+  delivery_fee: number;
+  subtotal: number;
+  total: number;
+  items: CartLine[];
+};
+
+export function Storefront({ storeSlug }: { storeSlug: string }) {
+  const [profile, setProfile] = useState<ShopProfile>(DEMO_PROFILE);
+  const [products, setProducts] = useState<ShopProduct[]>(DEMO_PRODUCTS);
+  const [cart, setCart] = useState<CartLine[]>([]);
+  const [category, setCategory] = useState("All pieces");
+  const [cartOpen, setCartOpen] = useState(false);
+  const [checkoutOpen, setCheckoutOpen] = useState(false);
+  const [customerName, setCustomerName] = useState("");
+  const [customerPhone, setCustomerPhone] = useState("");
+  const [deliveryZone, setDeliveryZone] = useState("Lagos Mainland");
+  const [order, setOrder] = useState<PlacedOrder | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  const isDemo = storeSlug === DEMO_SLUG;
+
+  useEffect(() => {
+    let active = true;
+    const load = async () => {
+      if (isDemo) {
+        setProfile(DEMO_PROFILE);
+        setProducts(DEMO_PRODUCTS);
+        setIsLoading(false);
+        return;
+      }
+      try {
+        const { data: shop } = await supabase
+          .from("profiles")
+          .select("*")
+          .eq("store_slug", storeSlug)
+          .maybeSingle();
+        if (!active) return;
+        if (!shop) {
+          setProducts([]);
+          setIsLoading(false);
+          return;
+        }
+        const { data: catalog } = await supabase
+          .from("products")
+          .select("*")
+          .eq("vendor_id", shop.id)
+          .eq("visible", true)
+          .order("created_at", { ascending: false });
+        if (!active) return;
+        setProfile(shop as unknown as ShopProfile);
+        setProducts((catalog ?? []) as unknown as ShopProduct[]);
+      } catch {
+        if (active) toast.error("This shop could not be opened just now.");
+      } finally {
+        if (active) setIsLoading(false);
+      }
+    };
+    void load();
+    return () => {
+      active = false;
+    };
+  }, [isDemo, storeSlug]);
+
+  const categories = useMemo(
+    () => ["All pieces", ...new Set(products.filter((item) => item.visible).map((item) => item.category))],
+    [products],
+  );
+  const filteredProducts = products.filter(
+    (product) => product.visible && (category === "All pieces" || product.category === category),
+  );
+  const itemCount = cart.reduce((sum, item) => sum + item.quantity, 0);
+  const subtotal = cart.reduce((sum, item) => sum + item.product.price * item.quantity, 0);
+  const deliveryFee = profile.delivery_zones[deliveryZone]?.fee ?? 0;
+
+  const addToCart = (product: ShopProduct) => {
+    if (product.stock < 1) return;
+    const variant = product.variants[0] ?? "One size";
+    setCart((current) => {
+      const existing = current.find((line) => line.product.id === product.id && line.variant === variant);
+      if (existing && existing.quantity >= product.stock) {
+        toast.error("That’s all we have in stock.");
+        return current;
+      }
+      return existing
+        ? current.map((line) =>
+            line.product.id === product.id && line.variant === variant
+              ? { ...line, quantity: line.quantity + 1 }
+              : line,
+          )
+        : [...current, { product, quantity: 1, variant }];
+    });
+    toast.success("Added to your bag");
+  };
+
+  const changeQuantity = (line: CartLine, delta: number) => {
+    setCart((current) =>
+      current
+        .map((row) =>
+          row.product.id === line.product.id && row.variant === line.variant
+            ? { ...row, quantity: Math.min(row.product.stock, row.quantity + delta) }
+            : row,
+        )
+        .filter((row) => row.quantity > 0),
+    );
+  };
+
+  const placeOrder = async () => {
+    if (!customerName.trim() || customerPhone.replace(/\D/g, "").length < 8 || cart.length === 0) {
+      toast.error("Add your name, a valid phone number and at least one item.");
+      return;
+    }
+    let createdOrder: PlacedOrder;
+    if (isDemo) {
+      createdOrder = {
+        order_number: `AT-${crypto.randomUUID().replaceAll("-", "").slice(0, 8).toUpperCase()}`,
+        customer_name: customerName.trim(),
+        customer_phone: customerPhone.trim(),
+        delivery_zone: deliveryZone,
+        delivery_fee: deliveryFee,
+        subtotal,
+        total: subtotal + deliveryFee,
+        items: [...cart],
+      };
+      setProducts((current) =>
+        current.map((product) => {
+          const purchased = cart.find((line) => line.product.id === product.id);
+          return purchased ? { ...product, stock: Math.max(0, product.stock - purchased.quantity) } : product;
+        }),
+      );
+    } else {
+      const { data, error } = await supabase.rpc("place_store_order", {
+        p_vendor_id: profile.id,
+        p_customer_name: customerName.trim(),
+        p_customer_phone: customerPhone.trim(),
+        p_delivery_zone: deliveryZone,
+        p_items: cart.map((item) => ({
+          product_id: item.product.id,
+          quantity: item.quantity,
+          variant: item.variant,
+        })),
+      });
+      if (error) {
+        toast.error(error.message.includes("monthly order limit") ? "This store has reached its monthly order limit." : error.message);
+        return;
+      }
+      const saved = data as unknown as Omit<PlacedOrder, "items">;
+      createdOrder = { ...saved, items: [...cart] };
+    }
+
+    setOrder(createdOrder);
+    setCheckoutOpen(false);
+    setCartOpen(true);
+    const text = buildWhatsAppOrderMessage({
+      ...createdOrder,
+      items: createdOrder.items.map((item) => ({
+        name: item.product.name,
+        quantity: item.quantity,
+        unitPrice: item.product.price,
+        variant: item.variant,
+      })),
+      bankName: profile.bank_name,
+      bankAccount: profile.bank_account,
+      bankAccountName: profile.bank_account_name,
+    });
+    const phone = (profile.whatsapp_phone || DEMO_VENDOR_PHONE).replace(/\D/g, "");
+    window.open(`https://wa.me/${phone}?text=${encodeURIComponent(text)}`, "_blank", "noopener,noreferrer");
+  };
+
+  const copyAccount = async () => {
+    try {
+      await navigator.clipboard.writeText(profile.bank_account);
+      toast.success("Account number copied");
+    } catch {
+      toast.error("Couldn’t copy — please copy the number manually.");
+    }
+  };
+
+  const goToOrder = () => {
+    setOrder(null);
+    setCart([]);
+    setCustomerName("");
+    setCustomerPhone("");
+    setCartOpen(false);
+  };
+
+  return (
+    <div className="storefront min-h-screen bg-background text-foreground">
+      <div className="announcement-bar">
+        <Sparkles className="h-3.5 w-3.5" aria-hidden="true" />
+        <span>Thoughtful Lagos style, delivered to your door</span>
+      </div>
+      <header className="store-header">
+        <a className="brand-wordmark" href={isDemo ? "/" : `/${storeSlug}`} aria-label={`${profile.store_name} home`}>
+          aura<span>threads</span>
+        </a>
+        <nav className="store-header-nav" aria-label="Store">
+          <a href="#collection">Shop the collection</a>
+          <a href="#our-note">Our note</a>
+        </nav>
+        <div className="store-header-actions">
+          <a className="dashboard-link" href="/dashboard">For sellers <ArrowUpRight aria-hidden="true" /></a>
+          <Button variant="ghost" size="icon" className="header-cart" aria-label={`Open shopping bag, ${itemCount} items`} onClick={() => { setOrder(null); setCartOpen(true); }}>
+            <ShoppingBag aria-hidden="true" />
+            {itemCount > 0 && <span className="bag-count">{itemCount}</span>}
+          </Button>
+        </div>
+      </header>
+
+      <main>
+        <section className="editorial-hero" id="our-note">
+          <div className="editorial-copy">
+            <div className="store-signature">
+              <span className="signature-avatar">A</span>
+              <span>{profile.store_name}<span className="verified-marker" title="Seller verified"><ShieldCheck /></span></span>
+              <span className="signature-location">Lagos, Nigeria</span>
+            </div>
+            <p className="eyebrow"><span /> A considered wardrobe, made close to home</p>
+            <h1>Good things<br />are <em>meant to be worn.</em></h1>
+            <p className="hero-description">{profile.bio}</p>
+            <a className="text-arrow-link" href="#collection">Meet your next favourite <ArrowDownRight aria-hidden="true" /></a>
+            <div className="hero-press-line"><span>Small batches</span><i /><span>Lagos-made spirit</span><i /><span>Always personal</span></div>
+          </div>
+          <div className="editorial-image-wrap">
+            <img className="editorial-image" src="/images/aura-emerald-set.jpg" alt="Kemi linen set in deep emerald, styled for an easy Lagos afternoon" width={1024} height={1280} fetchPriority="high" />
+            <div className="image-caption"><span>01 — 04</span><span>Made to move with you</span></div>
+            <div className="image-note">THE<br />LINEN<br />EDIT</div>
+          </div>
+          <a className="floating-social" href={`https://instagram.com/${profile.instagram_handle}`} target="_blank" rel="noreferrer" aria-label={`Visit ${profile.store_name} on Instagram`}><Instagram /></a>
+        </section>
+
+        <section className="collection-section" id="collection">
+          <div className="section-intro">
+            <div><p className="eyebrow"><span /> The good things</p><h2>A little of what<br />you <em>love.</em></h2></div>
+            <p>Pieces to reach for again and again.<br />Wrapped with care in Lagos.</p>
+          </div>
+          <div className="collection-toolbar" aria-label="Filter collection">
+            <div className="category-tabs" role="group" aria-label="Product categories">
+              {categories.map((item) => <button key={item} className={`category-tab ${category === item ? "is-current" : ""}`} onClick={() => setCategory(item)}>{item}<span>{item === "All pieces" ? products.filter((p) => p.visible).length : products.filter((p) => p.visible && p.category === item).length}</span></button>)}
+            </div>
+            <span className="stock-note">A few, lovely pieces <Sparkles aria-hidden="true" /></span>
+          </div>
+          {isLoading ? (
+            <div className="empty-store">Just opening our doors…</div>
+          ) : filteredProducts.length === 0 ? (
+            <div className="empty-store"><Store aria-hidden="true" /><p>This little shop is getting ready. Visit again soon.</p></div>
+          ) : (
+            <div className="product-grid">
+              {filteredProducts.map((product, index) => (
+                <article className="product-card" key={product.id}>
+                  <button className="product-photo-button" onClick={() => addToCart(product)} disabled={product.stock < 1} aria-label={`Add ${product.name} to bag`}>
+                    <img src={product.image_url} alt={product.name} width={1024} height={1280} loading={index > 1 ? "lazy" : undefined} />
+                    {product.compare_at_price && <span className="photo-tag">A little less</span>}
+                    <span className="quick-add"><Plus aria-hidden="true" /> Add to bag</span>
+                    <span className="stock-counter">{product.stock < 1 ? "Just sold out" : `${product.stock} left`}</span>
+                  </button>
+                  <div className="product-details">
+                    <div><span className="product-category">{product.category}</span><h3>{product.name}</h3></div>
+                    <div className="product-price"><span>{formatNaira(product.price)}</span>{product.compare_at_price && <del>{formatNaira(product.compare_at_price)}</del>}</div>
+                  </div>
+                  <div className="product-variants" aria-label={`Available options: ${product.variants.join(", ")}`}>
+                    {product.variants.map((variant) => <span key={variant}>{variant}</span>)}
+                    <button aria-label={`Add ${product.name} to favourites`} className="save-product" onClick={() => toast.success("We’ll keep this one in mind.")}><Heart /></button>
+                  </div>
+                </article>
+              ))}
+            </div>
+          )}
+        </section>
+
+        <section className="small-business-note">
+          <div className="note-number">A little<br />note, first.</div>
+          <div><p className="eyebrow">Direct from our hands</p><h2>Good style.<br /><em>Good people.</em></h2></div>
+          <p className="note-copy">Your order goes straight to us — no middlemen, no fuss. Choose your pieces, leave the delivery to us, and we’ll pick things up with you on WhatsApp.</p>
+          <a className="text-arrow-link" href={`https://wa.me/${(profile.whatsapp_phone || DEMO_VENDOR_PHONE).replace(/\D/g, "")}`} target="_blank" rel="noreferrer">Say hello <ArrowRight aria-hidden="true" /></a>
+        </section>
+
+        <footer className="store-footer"><a className="brand-wordmark" href="#top">aura<span>threads</span></a><span>Thoughtfully found. Personally sent from Lagos.</span><a href="/dashboard">Your shop could look like this <ArrowUpRight /></a></footer>
+      </main>
+
+      <Sheet open={cartOpen} onOpenChange={(open) => { setCartOpen(open); if (open) setOrder(null); }}>
+        <SheetContent side="bottom" className="store-cart-sheet">
+          {order ? (
+            <>
+              <SheetHeader className="cart-sheet-heading">
+                <div className="order-success-icon"><CircleCheck aria-hidden="true" /></div>
+                <p className="eyebrow">Thank you, lovely</p>
+                <SheetTitle>Your order is with us.</SheetTitle>
+                <SheetDescription>We’ve opened WhatsApp with your order details. Send the message to finish placing your order.</SheetDescription>
+              </SheetHeader>
+              <div className="order-invoice">
+                <div className="invoice-order-ref"><span>Order reference</span><strong>{order.order_number}</strong></div>
+                <div className="invoice-lines">
+                  {order.items.map((line) => <div key={`${line.product.id}-${line.variant}`}><span>{line.product.name} <small>· {line.variant} × {line.quantity}</small></span><strong>{formatNaira(line.product.price * line.quantity)}</strong></div>)}
+                  <div><span>Delivery · {order.delivery_zone}</span><strong>{formatNaira(order.delivery_fee)}</strong></div>
+                </div>
+                <div className="invoice-total"><span>Total to transfer</span><strong>{formatNaira(order.total)}</strong></div>
+                <div className="bank-details"><div><span>Direct bank transfer</span><strong>{order.customer_name ? profile.bank_name : ""}</strong></div><div><div><strong className="bank-number">{profile.bank_account}</strong><span>{profile.bank_account_name}</span></div><Button variant="outline" size="icon" aria-label="Copy account number" onClick={() => void copyAccount()}><Check aria-hidden="true" /></Button></div><small>Please confirm these details with the seller on WhatsApp before transferring.</small></div>
+              </div>
+              {isDemo && <p className="demo-transfer-note">Demo shop · sample transfer details only. Please don’t send money.</p>}
+              <SheetFooter className="cart-sheet-footer"><Button variant="outline" onClick={goToOrder}>Back to the collection</Button><Button asChild><a href={`https://wa.me/${(profile.whatsapp_phone || DEMO_VENDOR_PHONE).replace(/\D/g, "")}`} target="_blank" rel="noreferrer">Open WhatsApp <ArrowUpRight aria-hidden="true" /></a></Button></SheetFooter>
+            </>
+          ) : (
+            <>
+              <SheetHeader className="cart-sheet-heading"><p className="eyebrow">Your well-chosen finds</p><SheetTitle>Your bag<span className="bag-heading-count"> · {itemCount || 0}</span></SheetTitle><SheetDescription>Lovely choices. We’ll sort the delivery together.</SheetDescription></SheetHeader>
+              {cart.length ? <div className="cart-lines">{cart.map((line) => <div className="cart-line" key={`${line.product.id}-${line.variant}`}><img src={line.product.image_url} alt="" width={80} height={100} /><div className="cart-line-info"><h3>{line.product.name}</h3><span>{line.variant}</span><strong>{formatNaira(line.product.price)}</strong><div className="quantity-control"><Button size="icon" variant="outline" aria-label={`Remove one ${line.product.name}`} onClick={() => changeQuantity(line, -1)}><Minus /></Button><span>{line.quantity}</span><Button size="icon" variant="outline" aria-label={`Add one ${line.product.name}`} disabled={line.quantity >= line.product.stock} onClick={() => changeQuantity(line, 1)}><Plus /></Button></div></div><Button size="icon" variant="ghost" className="remove-line" aria-label={`Remove ${line.product.name}`} onClick={() => setCart((current) => current.filter((row) => row.product.id !== line.product.id))}><X /></Button></div>)}</div> : <div className="cart-empty"><ShoppingBag /><p>Your bag is waiting for its first lovely thing.</p><Button variant="outline" onClick={() => setCartOpen(false)}>Back to the pieces</Button></div>}
+              {cart.length > 0 && <><div className="cart-subtotal"><span>Subtotal</span><strong>{formatNaira(subtotal)}</strong></div><p className="cart-delivery-note">Delivery is added when you choose your location.</p><SheetFooter className="cart-sheet-footer"><Button className="continue-checkout" onClick={() => { setCartOpen(false); setCheckoutOpen(true); }}>Continue to delivery <ArrowRight aria-hidden="true" /></Button></SheetFooter></>}
+            </>
+          )}
+        </SheetContent>
+      </Sheet>
+
+      <Sheet open={checkoutOpen} onOpenChange={setCheckoutOpen}>
+        <SheetContent side="bottom" className="store-checkout-sheet">
+          <SheetHeader className="cart-sheet-heading"><Button variant="ghost" size="icon" className="back-to-bag" aria-label="Back to bag" onClick={() => { setCheckoutOpen(false); setCartOpen(true); }}><ArrowLeft /></Button><p className="eyebrow">Nearly there</p><SheetTitle>Let’s get it to you.</SheetTitle><SheetDescription>We’ll confirm everything together on WhatsApp.</SheetDescription></SheetHeader>
+          <div className="checkout-form">
+            <label htmlFor="customer-name">Your name</label><Input id="customer-name" placeholder="How should we address you?" autoComplete="name" value={customerName} onChange={(event) => setCustomerName(event.target.value)} />
+            <label htmlFor="customer-phone">WhatsApp number</label><Input id="customer-phone" placeholder="080 1234 5678" type="tel" autoComplete="tel" value={customerPhone} onChange={(event) => setCustomerPhone(event.target.value)} />
+            <label htmlFor="delivery-zone">Where shall we send it?</label><select id="delivery-zone" className="delivery-select" value={deliveryZone} onChange={(event) => setDeliveryZone(event.target.value)}>{Object.keys(profile.delivery_zones).map((zone) => <option key={zone} value={zone}>{zone} · {formatNaira(profile.delivery_zones[zone]?.fee ?? 0)}</option>)}</select>
+          </div>
+          <div className="delivery-summary"><div><span>Lovely choices</span><strong>{formatNaira(subtotal)}</strong></div><div><span>Delivery · {deliveryZone}</span><strong>{formatNaira(deliveryFee)}</strong></div><div><span>Total</span><strong>{formatNaira(subtotal + deliveryFee)}</strong></div></div>
+          <p className="transfer-disclaimer">You’ll transfer directly to the seller. We never hold your money.</p>
+          <SheetFooter className="cart-sheet-footer"><Button className="continue-checkout" onClick={() => void placeOrder()}>Place order on WhatsApp <ArrowUpRight aria-hidden="true" /></Button></SheetFooter>
+        </SheetContent>
+      </Sheet>
+      <div className="mobile-bottom-bar"><Button variant="ghost" onClick={() => document.getElementById("collection")?.scrollIntoView({ behavior: "smooth" })}><Menu />Collection</Button><Button variant="ghost" onClick={() => document.getElementById("our-note")?.scrollIntoView({ behavior: "smooth" })}><Sparkles />Our note</Button><Button variant="ghost" onClick={() => { setOrder(null); setCartOpen(true); }}><ShoppingBag />Bag{itemCount ? ` · ${itemCount}` : ""}</Button></div>
+    </div>
+  );
+}
