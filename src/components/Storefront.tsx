@@ -469,7 +469,67 @@ export function Storefront({ storeSlug }: { storeSlug: string }) {
           ) : (
             <>
               <SheetHeader className="cart-sheet-heading"><p className="eyebrow">Your well-chosen finds</p><SheetTitle>Your bag<span className="bag-heading-count"> · {itemCount || 0}</span></SheetTitle><SheetDescription>Lovely choices. We’ll sort the delivery together.</SheetDescription></SheetHeader>
-              {cart.length ? <div className="cart-lines">{cart.map((line) => <div className="cart-line" key={`${line.product.id}-${line.variant}`}><img src={line.product.image_url} alt="" width={80} height={100} /><div className="cart-line-info"><h3>{line.product.name}</h3><span>{line.variant}</span><strong>{formatNaira(line.product.price)}</strong><div className="quantity-control"><Button size="icon" variant="outline" aria-label={`Remove one ${line.product.name}`} onClick={() => changeQuantity(line, -1)}><Minus /></Button><span>{line.quantity}</span><Button size="icon" variant="outline" aria-label={`Add one ${line.product.name}`} disabled={line.quantity >= line.product.stock} onClick={() => changeQuantity(line, 1)}><Plus /></Button></div></div><Button size="icon" variant="ghost" className="remove-line" aria-label={`Remove ${line.product.name}`} onClick={() => setCart((current) => current.filter((row) => row.product.id !== line.product.id))}><X /></Button></div>)}</div> : <div className="cart-empty"><ShoppingBag /><p>Your bag is waiting for its first lovely thing.</p><Button variant="outline" onClick={() => setCartOpen(false)}>Back to the pieces</Button></div>}
+              {cart.length ? (
+                <div className="cart-lines">
+                  {cart.map((line) => (
+                    <div className="cart-line" key={`${line.product.id}-${line.variant}`}>
+                      <img src={line.product.image_url} alt="" width={80} height={100} />
+                      <div className="cart-line-info">
+                        <h3>{line.product.name}</h3>
+                        <span>{line.variant}</span>
+                        <strong>{formatNaira(line.product.price)}</strong>
+                        <div className="quantity-control">
+                          <Button
+                            size="icon"
+                            variant="outline"
+                            aria-label={`Remove one ${line.product.name}`}
+                            onClick={() => changeQuantity(line, -1)}
+                          >
+                            <Minus />
+                          </Button>
+                          <span>{line.quantity}</span>
+                          <Button
+                            size="icon"
+                            variant="outline"
+                            aria-label={`Add one ${line.product.name}`}
+                            disabled={line.quantity >= line.product.stock}
+                            onClick={() => changeQuantity(line, 1)}
+                          >
+                            <Plus />
+                          </Button>
+                        </div>
+                      </div>
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        className="remove-line"
+                        aria-label={`Remove ${line.product.name} (${line.variant})`}
+                        onClick={() =>
+                          setCart((current) =>
+                            current.filter(
+                              (row) =>
+                                !(
+                                  row.product.id === line.product.id &&
+                                  row.variant === line.variant
+                                ),
+                            ),
+                          )
+                        }
+                      >
+                        <X />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="cart-empty">
+                  <ShoppingBag />
+                  <p>Your bag is waiting for its first lovely thing.</p>
+                  <Button variant="outline" onClick={() => setCartOpen(false)}>
+                    Back to the pieces
+                  </Button>
+                </div>
+              )}
               {cart.length > 0 && <><div className="cart-subtotal"><span>Subtotal</span><strong>{formatNaira(subtotal)}</strong></div><p className="cart-delivery-note">Delivery is added when you choose your location.</p><SheetFooter className="cart-sheet-footer"><Button className="continue-checkout" onClick={() => { setCartOpen(false); setCheckoutOpen(true); }}>Continue to delivery <ArrowRight aria-hidden="true" /></Button></SheetFooter></>}
             </>
           )}
