@@ -471,7 +471,10 @@ export function Storefront({ storeSlug }: { storeSlug: string }) {
                   <div><span>Delivery · {order.delivery_zone}</span><strong>{formatNaira(order.delivery_fee)}</strong></div>
                 </div>
                 <div className="invoice-total"><span>Total to transfer</span><strong>{formatNaira(order.total)}</strong></div>
-                <div className="bank-details"><div><span>Direct bank transfer</span><strong>{order.customer_name ? profile.bank_name : ""}</strong></div><div><div><strong className="bank-number">{profile.bank_account}</strong><span>{profile.bank_account_name}</span></div><Button variant="outline" size="icon" aria-label="Copy account number" onClick={() => void copyAccount()}><Check aria-hidden="true" /></Button></div><small>Please confirm these details with the seller on WhatsApp before transferring.</small></div>
+                <div className="bank-details"><div><span>Direct bank transfer</span><strong>{order.customer_name ? profile.bank_name : ""}</strong></div><div><div><strong className="bank-number">{profile.bank_account}</strong><span>{profile.bank_account_name}</span></div>
+                  <Button variant="outline" size="icon" aria-label="Copy account number" onClick={() => void copyAccount()}>
+                    {accountCopied ? <Check aria-hidden="true" /> : <Copy aria-hidden="true" />}
+                  </Button></div><small>Please confirm these details with the seller on WhatsApp before transferring.</small></div>
               </div>
               {isDemo && <p className="demo-transfer-note">Demo shop · sample transfer details only. Please don’t send money.</p>}
               <SheetFooter className="cart-sheet-footer"><Button variant="outline" onClick={goToOrder}>Back to the collection</Button><Button asChild><a href={`https://wa.me/${(profile.whatsapp_phone || DEMO_VENDOR_PHONE).replace(/\D/g, "")}`} target="_blank" rel="noreferrer">Open WhatsApp <ArrowUpRight aria-hidden="true" /></a></Button></SheetFooter>
