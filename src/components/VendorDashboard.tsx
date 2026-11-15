@@ -32,6 +32,13 @@ import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
+import {
   DEMO_ORDERS,
   DEMO_PRODUCTS,
   DEMO_PROFILE,
@@ -85,6 +92,28 @@ export function VendorDashboard() {
   });
   const [newZone, setNewZone] = useState("");
   const [newZoneFee, setNewZoneFee] = useState("");
+
+  const [selectedOrder, setSelectedOrder] = useState<OrderRecord | null>(null);
+  const [orderItems, setOrderItems] = useState<
+    Array<{ id: string; product_name: string; quantity: number; unit_price: number; variant: string }>
+  >([]);
+  const [loadingItems, setLoadingItems] = useState(false);
+
+  const openOrderDetails = async (order: OrderRecord) => {
+    setSelectedOrder(order);
+    setLoadingItems(true);
+    const { data, error } = await supabase
+      .from("order_items")
+      .select("id, product_name, quantity, unit_price, variant")
+      .eq("order_id", order.id);
+    if (error) {
+      toast.error("Couldn't load items for this order.");
+      setOrderItems([]);
+    } else {
+      setOrderItems(data ?? []);
+    }
+    setLoadingItems(false);
+  };
 
   useEffect(() => {
     let active = true;
@@ -435,7 +464,28 @@ export function VendorDashboard() {
           <TabsContent value="orders" className="dashboard-tab-content">
             <div className="dashboard-section-heading orders-page-heading"><div><p className="eyebrow">Every order, in one place</p><h2>On the way to something good.</h2></div><span className="orders-total">{orders.length} {orders.length === 1 ? "order" : "orders"}</span></div>
             <div className="order-tools"><div className="order-search"><Search /><Input aria-label="Find an order" placeholder="Find a customer or order number" value={orderSearch} onChange={(event) => setOrderSearch(event.target.value)} /></div><select className="dashboard-select" aria-label="Filter orders by status" value={orderFilter} onChange={(event) => setOrderFilter(event.target.value)}><option value="all">Every order</option>{Object.entries(statusLabels).map(([key, label]) => <option value={key} key={key}>{label}</option>)}</select></div>
-            <div className="orders-table"><div className="orders-table-head"><span>ORDER</span><span>YOUR CUSTOMER</span><span>DELIVERY</span><span>TOTAL</span><span>STATUS</span><span>UPDATE</span></div>{filteredOrders.length ? filteredOrders.map((order) => <OrderRow key={order.id} order={order} onStatusChange={(status) => void saveOrderStatus(order, status)} />) : <div className="empty-dashboard-note">No orders found. When someone orders, you’ll see it here.</div>}</div>
+            <div className="orders-table">
+              <div className="orders-table-head">
+                <span>ORDER</span>
+                <span>YOUR CUSTOMER</span>
+                <span>DELIVERY</span>
+                <span>TOTAL</span>
+                <span>STATUS</span>
+                <span>UPDATE</span>
+               </div>
+               {filteredOrders.length ? (
+                 filteredOrders.map((order) => (
+                   <OrderRow
+                     key={order.id}
+                     order={order}
+                     onOpen={() => void openOrderDetails(order)}
+                     onStatusChange={(status) => void saveOrderStatus(order, status)}
+                   />
+                 ))
+               ) : (
+                 <div className="empty-dashboard-note">No orders found. When someone orders, you’ll see it here.</div>
+               )}
+             </div>
           </TabsContent>
           <TabsContent value="settings" className="dashboard-tab-content">
             {settings && <><div className="dashboard-section-heading settings-heading"><div><p className="eyebrow">The details customers see</p><h2>Your shop, your way.</h2></div><Button onClick={() => void saveSettings()}>Save shop details <Check /></Button></div><div className="settings-columns"><div className="settings-column"><section className="settings-group"><div className="settings-group-title"><Store /><div><h3>A warm hello</h3><p>Your name and the note that goes with it.</p></div></div><label htmlFor="settings-shop-name">Shop name</label><Input id="settings-shop-name" value={settings.store_name} onChange={(event) => setSettings({ ...settings, store_name: event.target.value })} /><label htmlFor="settings-bio">A little note about your shop</label><Textarea id="settings-bio" rows={3} value={settings.bio} onChange={(event) => setSettings({ ...settings, bio: event.target.value })} /><label htmlFor="settings-photo">Shop photo link</label><Input id="settings-photo" placeholder="https://…" value={settings.avatar_url} onChange={(event) => setSettings({ ...settings, avatar_url: event.target.value })} /><label htmlFor="settings-instagram">Instagram name</label><Input id="settings-instagram" placeholder="yourshop.ng" value={settings.instagram_handle} onChange={(event) => setSettings({ ...settings, instagram_handle: event.target.value })} /></section><section className="settings-group"><div className="settings-group-title"><Banknote /><div><h3>Paid straight to you</h3><p>Your customers transfer directly to this account.</p></div></div><label htmlFor="settings-bank">Bank name</label><Input id="settings-bank" placeholder="e.g. Access Bank" value={settings.bank_name} onChange={(event) => setSettings({ ...settings, bank_name: event.target.value })} /><label htmlFor="settings-account-number">Account number</label><Input id="settings-account-number" inputMode="numeric" maxLength={10} placeholder="10 digits" value={settings.bank_account} onChange={(event) => setSettings({ ...settings, bank_account: event.target.value.replace(/\D/g, "").slice(0, 10) })} /><label htmlFor="settings-account-name">Account name</label><Input id="settings-account-name" value={settings.bank_account_name} onChange={(event) => setSettings({ ...settings, bank_account_name: event.target.value })} /></section></div><div className="settings-column"><section className="settings-group"><div className="settings-group-title"><Truck /><div><h3>Getting there</h3><p>Set the flat delivery rate for each area you serve.</p></div></div>{Object.entries(settings.delivery_zones).map(([zone, detail]) => <div className="zone-row" key={zone}><Input aria-label={`${zone} delivery area`} value={zone} onChange={(event) => { const nextZones = { ...settings.delivery_zones }; const updated = nextZones[zone]; delete nextZones[zone]; if (updated) nextZones[event.target.value] = updated; setSettings({ ...settings, delivery_zones: nextZones }); }} /><div className="zone-fee-input"><span>₦</span><Input aria-label={`${zone} delivery fee`} inputMode="numeric" value={detail.fee} onChange={(event) => setSettings({ ...settings, delivery_zones: { ...settings.delivery_zones, [zone]: { fee: Number(event.target.value) || 0 } } })} /><Button variant="ghost" size="icon" aria-label={`Remove ${zone}`} onClick={() => { const zones = { ...settings.delivery_zones }; delete zones[zone]; setSettings({ ...settings, delivery_zones: zones }); }}><X /></Button></div></div>)}<div className="add-zone-fields"><Input aria-label="New delivery area" placeholder="Area name" value={newZone} onChange={(event) => setNewZone(event.target.value)} /><Input aria-label="New delivery fee" type="number" min="0" placeholder="Delivery fee in ₦" value={newZoneFee} onChange={(event) => setNewZoneFee(event.target.value)} /><Button variant="outline" aria-label="Add delivery area" onClick={addDeliveryZone}><Plus /></Button></div></section><section className="settings-group"><div className="settings-group-title"><ShoppingBag /><div><h3>Say hello on WhatsApp</h3><p>Order updates and questions go straight to you.</p></div></div><label htmlFor="settings-whatsapp">WhatsApp number</label><Input id="settings-whatsapp" type="tel" placeholder="080 1234 5678" value={settings.whatsapp_phone} onChange={(event) => setSettings({ ...settings, whatsapp_phone: event.target.value })} /></section><section className="settings-group"><div className="settings-group-title"><Sparkles /><div><h3>Your little shop link</h3><p>Made for WhatsApp status, Instagram bio and messages.</p></div></div><div className="share-link-box"><span>{storeLink.replace(/^https?:\/\//, "")}</span><Button size="icon" variant="ghost" aria-label="Copy shop link" onClick={() => void copyStoreLink()}><Copy /></Button></div><a className="text-link" href={storeLink} target="_blank" rel="noreferrer">Open your shop <ExternalLink /></a></section></div></div></>}
@@ -443,6 +493,69 @@ export function VendorDashboard() {
         </Tabs>
       </div>
       <footer className="dashboard-footer"><span>Direct orders. Direct payments. Always yours.</span><a href="/">Back to the storefront <ArrowUpRight /></a></footer>
+
+      <Sheet open={Boolean(selectedOrder)} onOpenChange={(open) => !open && setSelectedOrder(null)}>
+        <SheetContent side="right" className="order-details-sheet">
+          {selectedOrder && (
+            <>
+              <SheetHeader>
+                <p className="eyebrow">Order details</p>
+                <SheetTitle>{selectedOrder.order_number}</SheetTitle>
+                <SheetDescription>
+                  Placed on {new Date(selectedOrder.created_at).toLocaleDateString("en-NG", { day: "numeric", month: "long", year: "numeric" })}
+                </SheetDescription>
+              </SheetHeader>
+              <div className="order-details-body" style={{ marginTop: "1.5rem", display: "flex", flexDirection: "column", gap: "1rem" }}>
+                <div style={{ background: "var(--card, #fff)", padding: "1rem", borderRadius: "8px", border: "1px solid var(--border, #e5e5e5)" }}>
+                  <span style={{ fontSize: "0.8rem", textTransform: "uppercase", letterSpacing: "0.05em", color: "var(--muted-foreground)" }}>Customer</span>
+                  <div style={{ fontWeight: 600, fontSize: "1.1rem" }}>{selectedOrder.customer_name}</div>
+                  <div style={{ color: "var(--muted-foreground)" }}>{selectedOrder.customer_phone}</div>
+                  <div style={{ marginTop: "0.5rem" }}>
+                    <a
+                      href={`https://wa.me/${selectedOrder.customer_phone.replace(/\D/g, "")}`}
+                      target="_blank"
+                      rel="noreferrer"
+                      style={{ fontSize: "0.9rem", color: "var(--primary)", textDecoration: "underline" }}
+                    >
+                      Message on WhatsApp →
+                    </a>
+                  </div>
+                </div>
+
+                <div style={{ background: "var(--card, #fff)", padding: "1rem", borderRadius: "8px", border: "1px solid var(--border, #e5e5e5)" }}>
+                  <span style={{ fontSize: "0.8rem", textTransform: "uppercase", letterSpacing: "0.05em", color: "var(--muted-foreground)" }}>Delivery destination</span>
+                  <div style={{ fontWeight: 600 }}>{selectedOrder.delivery_zone}</div>
+                </div>
+
+                <div style={{ background: "var(--card, #fff)", padding: "1rem", borderRadius: "8px", border: "1px solid var(--border, #e5e5e5)" }}>
+                  <span style={{ fontSize: "0.8rem", textTransform: "uppercase", letterSpacing: "0.05em", color: "var(--muted-foreground)" }}>Purchased items</span>
+                  {loadingItems ? (
+                    <p style={{ fontSize: "0.9rem", color: "var(--muted-foreground)", marginTop: "0.5rem" }}>Loading items…</p>
+                  ) : orderItems.length > 0 ? (
+                    <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem", marginTop: "0.75rem" }}>
+                      {orderItems.map((item) => (
+                        <div key={item.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: "1px solid var(--border, #f0f0f0)", paddingBottom: "0.5rem" }}>
+                          <div>
+                            <div style={{ fontWeight: 500 }}>{item.product_name}</div>
+                            <small style={{ color: "var(--muted-foreground)" }}>{item.variant} × {item.quantity}</small>
+                          </div>
+                          <strong>{formatNaira(item.unit_price * item.quantity)}</strong>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p style={{ fontSize: "0.9rem", color: "var(--muted-foreground)", marginTop: "0.5rem" }}>Item details recorded on order confirmation.</p>
+                  )}
+                  <div style={{ display: "flex", justifyContent: "space-between", marginTop: "1rem", paddingTop: "0.75rem", borderTop: "2px solid var(--border, #e5e5e5)" }}>
+                    <span>Total order value</span>
+                    <strong style={{ fontSize: "1.1rem" }}>{formatNaira(selectedOrder.total)}</strong>
+                  </div>
+                </div>
+              </div>
+            </>
+          )}
+        </SheetContent>
+      </Sheet>
     </main>
   );
 }
