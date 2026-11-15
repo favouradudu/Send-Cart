@@ -747,3 +747,28 @@
   font-weight: 600;
 }
 
+/* Photo upload & plan upgrade buttons */
+.photo-upload-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+  flex-wrap: wrap;
+}
+.photo-upload-or {
+  font-size: 11px;
+  color: var(--muted-foreground);
+}
+.product-preview-wrap {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 8px;
+}
+.plan-upgrade-btn {
+  font-size: 11px;
+  height: 28px;
+  padding: 0 10px;
+  gap: 5px;
+  cursor: pointer;
+}
