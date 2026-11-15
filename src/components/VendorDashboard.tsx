@@ -44,14 +44,15 @@ import {
   type ShopProfile,
 } from "@/lib/shop";
 
-type OrderRecord = (typeof DEMO_ORDERS)[number] & { id: string };
+type OrderStatus = "pending_confirmation" | "paid" | "dispatched" | "delivered";
+type OrderRecord = Omit<(typeof DEMO_ORDERS)[number], "status"> & { id: string; status: OrderStatus };
 type VendorAuthMode = "signin" | "signup";
 type DashboardTab = "overview" | "products" | "orders" | "settings";
 
-const statusLabels: Record<string, string> = {
+const statusLabels: Record<OrderStatus, string> = {
   pending_confirmation: "Pending confirmation",
-  paid: "Paid",
-  dispatched: "Dispatched",
+  paid: "Payment confirmed",
+  dispatched: "On the way",
   delivered: "Delivered",
 };
 
@@ -126,7 +127,7 @@ export function VendorDashboard() {
       if (!currentProfile) {
         const { data: authUserData } = await supabase.auth.getUser();
         const userEmail = authUserData.user?.email ?? "";
-        const emailSlug = userEmail.split("@")[0].replace(/[^a-z0-9]/gi, "").toLowerCase() || "shop";
+        const emailSlug = (userEmail.split("@")[0] ?? "").replace(/[^a-z0-9]/gi, "").toLowerCase() || "shop";
         const autoSlug = `${emailSlug}-${userId.slice(0, 6)}`;
         const storeName = emailSlug ? emailSlug.charAt(0).toUpperCase() + emailSlug.slice(1) + " Store" : "My Boutique";
 
@@ -354,7 +355,7 @@ export function VendorDashboard() {
     }
   };
 
-  const saveOrderStatus = async (order: OrderRecord, status: string) => {
+  const saveOrderStatus = async (order: OrderRecord, status: OrderStatus) => {
     if (!userId) return;
     const { error } = await supabase.from("orders").update({ status }).eq("id", order.id).eq("vendor_id", userId);
     if (error) {
@@ -450,6 +451,36 @@ function GoogleMark() {
   return <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24"><path fill="#4285F4" d="M23.49 12.27c0-.79-.07-1.54-.19-2.27H12v4.51h6.47c-.29 1.48-1.14 2.73-2.4 3.58v3h3.86c2.26-2.09 3.56-5.17 3.56-8.82z"/><path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.86-3c-1.08.72-2.45 1.16-4.07 1.16-3.13 0-5.78-2.11-6.73-4.96H1.29v3.09C3.26 21.3 7.31 24 12 24z"/><path fill="#FBBC05" d="M5.27 14.29c-.25-.72-.38-1.49-.38-2.29s.14-1.57.38-2.29V6.62H1.29C.47 8.24 0 10.06 0 12s.47 3.76 1.29 5.38l3.98-3.09z"/><path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.31 0 3.26 2.7 1.29 6.62l3.98 3.09c.95-2.85 3.6-4.96 6.73-4.96z"/></svg>;
 }
 
-function OrderRow({ order, onOpen, onStatusChange }: { order: OrderRecord; onOpen?: () => void; onStatusChange?: (status: string) => void }) {
-  return <article className="order-row"><span className="order-reference">{order.order_number}<small>{new Date(order.created_at).toLocaleDateString("en-NG", { day: "numeric", month: "short" })}</small></span><span className="order-customer">{order.customer_name}<small>{order.customer_phone}</small></span><span className="order-zone">{order.delivery_zone}</span><strong className="order-total">{formatNaira(order.total)}</strong><span className={`order-status status-${order.status}`}>{statusLabels[order.status]}</span>{onStatusChange ? <select className="order-status-select" aria-label={`Update ${order.order_number} status`} value={order.status} onChange={(event) => onStatusChange(event.target.value)}>{Object.entries(statusLabels).map(([key, label]) => <option key={key} value={key}>{label}</option>)}</select> : <Button variant="ghost" size="icon" aria-label={`Open order ${order.order_number}`} onClick={onOpen}><ArrowRight /></Button>}</article>;
+function OrderRow({ order, onOpen, onStatusChange }: { order: OrderRecord; onOpen?: () => void; onStatusChange?: (status: OrderStatus) => void }) {
+  return (
+    <article className="order-row">
+      <span className="order-reference" onClick={onOpen} style={{ cursor: onOpen ? "pointer" : "default" }}>
+        {order.order_number}
+        <small>{new Date(order.created_at).toLocaleDateString("en-NG", { day: "numeric", month: "short" })}</small>
+      </span>
+      <span className="order-customer">
+        {order.customer_name}
+        <small>{order.customer_phone}</small>
+      </span>
+      <span className="order-zone">{order.delivery_zone}</span>
+      <strong className="order-total">{formatNaira(order.total)}</strong>
+      <span className={`order-status status-${order.status}`}>{statusLabels[order.status]}</span>
+      {onStatusChange ? (
+        <select
+          className="order-status-select"
+          aria-label={`Update ${order.order_number} status`}
+          value={order.status}
+          onChange={(event) => onStatusChange(event.target.value as OrderStatus)}
+        >
+          {Object.entries(statusLabels).map(([key, label]) => (
+            <option key={key} value={key}>{label}</option>
+          ))}
+        </select>
+      ) : (
+        <Button variant="ghost" size="icon" aria-label={`Open order ${order.order_number}`} onClick={onOpen}>
+          <ArrowRight />
+        </Button>
+      )}
+    </article>
+  );
 }
