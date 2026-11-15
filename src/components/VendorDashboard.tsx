@@ -92,6 +92,9 @@ export function VendorDashboard() {
   });
   const [newZone, setNewZone] = useState("");
   const [newZoneFee, setNewZoneFee] = useState("");
+  const [uploadingImage, setUploadingImage] = useState(false);
+  const [upgradeTier, setUpgradeTier] = useState<"credits" | "unlimited" | null>(null);
+  const [upgradeBusy, setUpgradeBusy] = useState(false);
 
   const [selectedOrder, setSelectedOrder] = useState<OrderRecord | null>(null);
   const [orderItems, setOrderItems] = useState<
@@ -117,6 +120,82 @@ export function VendorDashboard() {
 
   useEffect(() => {
     let active = true;
+    const handlePhotoUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith("image/")) {
+      toast.error("Please select an image file (JPG, PNG, WebP).");
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("Photo is too large. Please select a photo under 5MB.");
+      return;
+    }
+
+    if (!userId) {
+      toast.error("Please sign in to upload photos.");
+      return;
+    }
+
+    setUploadingImage(true);
+    try {
+      const fileExt = file.name.split(".").pop()?.toLowerCase() || "jpg";
+      const filePath = `${userId}/${Date.now()}-${Math.random().toString(36).slice(2, 7)}.${fileExt}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from("store-media")
+        .upload(filePath, file, {
+          cacheControl: "3600",
+          upsert: true,
+        });
+
+      if (uploadError) throw uploadError;
+
+      const { data: urlData } = supabase.storage.from("store-media").getPublicUrl(filePath);
+      setDraftProduct((prev) => ({ ...prev, image_url: urlData.publicUrl }));
+      toast.success("Photo uploaded successfully!");
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Upload failed";
+      toast.error(`Could not upload photo: ${message}`);
+    } finally {
+      setUploadingImage(false);
+      if (event.target) event.target.value = "";
+    }
+  };
+
+  const handleUpgradeConfirm = async () => {
+    if (!userId || !profile || !upgradeTier) return;
+    setUpgradeBusy(true);
+    try {
+      if (upgradeTier === "credits") {
+        const nextCredits = (profile.order_credits ?? 0) + 50;
+        const { error } = await supabase
+          .from("profiles")
+          .update({ order_credits: nextCredits })
+          .eq("id", userId);
+        if (error) throw error;
+        setProfile({ ...profile, order_credits: nextCredits });
+        toast.success("Added 50 order credits to your shop!");
+      } else if (upgradeTier === "unlimited") {
+        const { error } = await supabase
+          .from("profiles")
+          .update({ plan: "unlimited" })
+          .eq("id", userId);
+        if (error) throw error;
+        setProfile({ ...profile, plan: "unlimited" });
+        toast.success("Your shop is now on the Unlimited plan!");
+      }
+      setUpgradeTier(null);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Upgrade failed";
+      toast.error(`Upgrade could not be completed: ${message}`);
+    } finally {
+      setUpgradeBusy(false);
+    }
+  };
+    
     const { data: listener } = supabase.auth.onAuthStateChange((event, session) => {
       if (!active || (event !== "SIGNED_IN" && event !== "SIGNED_OUT" && event !== "USER_UPDATED")) return;
       setUserId(session?.user.id ?? null);
@@ -454,11 +533,76 @@ export function VendorDashboard() {
           <TabsContent value="overview" className="dashboard-tab-content">
             <div className="stats-grid"><article className="stat-block"><span>Orders this month</span><strong>{monthCount}<small> / {profile.plan === "unlimited" ? "∞" : monthlyOrderLimit}</small></strong><p>{profile.plan === "unlimited" ? "Unlimited orders" : `${Math.max(0, monthlyOrderLimit - monthCount)} orders left on your free plan`}</p></article><article className="stat-block"><span>On the rails</span><strong>{pendingOrders}</strong><p>Waiting for your confirmation</p></article><article className="stat-block"><span>On your shop floor</span><strong>{visibleProducts.length}</strong><p>Pieces customers can discover</p></article></div>
             <div className="dashboard-overview-columns"><section className="dashboard-section orders-preview"><div className="dashboard-section-heading"><div><p className="eyebrow">The latest from your customers</p><h2>Recent orders</h2></div><Button variant="ghost" onClick={() => setActiveTab("orders")}>All orders <ArrowRight /></Button></div>{orders.slice(0, 3).length ? orders.slice(0, 3).map((order) => <OrderRow key={order.id} order={order} onOpen={() => setActiveTab("orders")} />) : <p className="empty-dashboard-note">Your first order will find its way here.</p>}</section><section className="dashboard-section share-preview"><p className="eyebrow">A shop of your own</p><h2>Share a little of<br />what you love.</h2><p>One lovely link for WhatsApp, your bio and everywhere you say hello.</p><div className="share-link-box"><span>{storeLink.replace(/^https?:\/\//, "") || "your-shop-link"}</span><Button size="icon" variant="ghost" aria-label="Copy shop link" onClick={() => void copyStoreLink()}><Copy /></Button></div><div className="share-qr"><QRCodeSVG value={storeLink || "https://example.com"} size={104} includeMargin bgColor="transparent" fgColor="currentColor" aria-label="Shop link QR code" /><span>Point your camera<br />to find our shop</span></div></section></div>
-            <section className="plan-strip"><div className="plan-icon"><Sparkles /></div><div><p className="eyebrow">A little breathing room</p><h2>Made for the way you sell.</h2><p>Free for your first 30 orders each month. Grow at your own pace, always keeping your money direct.</p></div><div className="plan-prices"><span><strong>₦500</strong> · 50 order credits</span><span><strong>₦2,000</strong> · unlimited / month</span></div></section>
+            <section className="plan-strip"><div className="plan-icon"><Sparkles /></div><div><p className="eyebrow">A little breathing room</p><h2>Made for the way you sell.</h2><p>Free for your first 30 orders each month. Grow at your own pace, always keeping your money direct.</p></div>
+              <div className="plan-prices">
+                <Button
+                  type="button"
+                   variant="outline"
+                   size="sm"
+                   className="plan-upgrade-btn"
+                   onClick={() => setUpgradeTier("credits")}
+                 >
+                   <strong>₦500</strong> · 50 order credits
+                 </Button>
+                 <Button
+                   type="button"
+                   size="sm"
+                   className="plan-upgrade-btn"
+                   onClick={() => setUpgradeTier("unlimited")}
+                >
+                   <Sparkles /> <strong>₦2,000</strong> · Unlimited / month
+                 </Button>
+              </div>
+            </section>
           </TabsContent>
           <TabsContent value="products" className="dashboard-tab-content">
             <div className="dashboard-section-heading products-page-heading"><div><p className="eyebrow">The pieces you’re proud of</p><h2>Your catalog <span>· {products.length}</span></h2></div><Button onClick={resetProductForm}><Plus /> Add a piece</Button></div>
-            <div className="product-editor" id="product-editor"><div className="product-editor-heading"><div><p className="eyebrow">{editingProductId ? "A little adjustment" : "A new favourite"}</p><h3>{editingProductId ? "Edit this piece" : "Add to your shop"}</h3></div>{editingProductId && <Button variant="ghost" size="icon" aria-label="Cancel editing" onClick={resetProductForm}><X /></Button>}</div><div className="product-form-grid"><div className="form-span-two"><label htmlFor="product-name">Piece name</label><Input id="product-name" placeholder="e.g. The Kemi Linen Set" value={draftProduct.name} onChange={(event) => setDraftProduct({ ...draftProduct, name: event.target.value })} /></div><div><label htmlFor="product-category">Collection</label><select className="dashboard-select" id="product-category" value={draftProduct.category} onChange={(event) => setDraftProduct({ ...draftProduct, category: event.target.value })}><option>Best Sellers</option><option>New Arrivals</option><option>Sale</option></select></div><div><label htmlFor="product-price">Price · ₦</label><Input id="product-price" type="number" min="0" inputMode="numeric" placeholder="48500" value={draftProduct.price} onChange={(event) => setDraftProduct({ ...draftProduct, price: event.target.value })} /></div><div><label htmlFor="product-sale-price">Original price, if on sale</label><Input id="product-sale-price" type="number" min="0" inputMode="numeric" placeholder="Optional" value={draftProduct.compare_at_price} onChange={(event) => setDraftProduct({ ...draftProduct, compare_at_price: event.target.value })} /></div><div><label htmlFor="product-stock">Available pieces</label><Input id="product-stock" type="number" min="0" inputMode="numeric" placeholder="5" value={draftProduct.stock} onChange={(event) => setDraftProduct({ ...draftProduct, stock: event.target.value })} /></div><div className="form-span-two"><label htmlFor="product-image">Photo link</label><Input id="product-image" type="url" placeholder="https://…" value={draftProduct.image_url} onChange={(event) => setDraftProduct({ ...draftProduct, image_url: event.target.value })} />{draftProduct.image_url && <img className="product-image-preview" src={draftProduct.image_url} alt="Product preview" />}</div><div className="form-span-two"><label htmlFor="product-variants">Sizes, colours or options <span>· Separate with commas</span></label><Input id="product-variants" placeholder="S, M, L · or Wine, Black" value={draftProduct.variants} onChange={(event) => setDraftProduct({ ...draftProduct, variants: event.target.value })} /></div><div className="form-span-two"><label htmlFor="product-description">A little about this piece</label><Textarea id="product-description" placeholder="What makes it special?" value={draftProduct.description} onChange={(event) => setDraftProduct({ ...draftProduct, description: event.target.value })} /></div></div><div className="product-form-actions"><span><Upload /> Product photo should be a link anyone can open.</span><Button disabled={busy} onClick={() => void saveProduct()}>{busy ? "Saving…" : editingProductId ? "Save changes" : "Add this piece"} <Check /></Button></div></div>
+            <div className="product-editor" id="product-editor"><div className="product-editor-heading"><div><p className="eyebrow">{editingProductId ? "A little adjustment" : "A new favourite"}</p><h3>{editingProductId ? "Edit this piece" : "Add to your shop"}</h3></div>{editingProductId && <Button variant="ghost" size="icon" aria-label="Cancel editing" onClick={resetProductForm}><X /></Button>}</div><div className="product-form-grid"><div className="form-span-two"><label htmlFor="product-name">Piece name</label><Input id="product-name" placeholder="e.g. The Kemi Linen Set" value={draftProduct.name} onChange={(event) => setDraftProduct({ ...draftProduct, name: event.target.value })} /></div><div><label htmlFor="product-category">Collection</label><select className="dashboard-select" id="product-category" value={draftProduct.category} onChange={(event) => setDraftProduct({ ...draftProduct, category: event.target.value })}><option>Best Sellers</option><option>New Arrivals</option><option>Sale</option></select></div><div><label htmlFor="product-price">Price · ₦</label><Input id="product-price" type="number" min="0" inputMode="numeric" placeholder="48500" value={draftProduct.price} onChange={(event) => setDraftProduct({ ...draftProduct, price: event.target.value })} /></div><div><label htmlFor="product-sale-price">Original price, if on sale</label><Input id="product-sale-price" type="number" min="0" inputMode="numeric" placeholder="Optional" value={draftProduct.compare_at_price} onChange={(event) => setDraftProduct({ ...draftProduct, compare_at_price: event.target.value })} /></div><div><label htmlFor="product-stock">Available pieces</label><Input id="product-stock" type="number" min="0" inputMode="numeric" placeholder="5" value={draftProduct.stock} onChange={(event) => setDraftProduct({ ...draftProduct, stock: event.target.value })} /></div>
+              <div className="form-span-two">
+                <label htmlFor="product-image">Piece photo</label>
+               <div className="photo-upload-row">
+                 <input
+                   type="file"
+                   id="product-file-input"
+                   accept="image/*"
+                   className="hidden"
+                   disabled={uploadingImage}
+                   onChange={(event) => void handlePhotoUpload(event)}
+                 />
+                 <Button
+                   type="button"
+                   variant="outline"
+                   size="sm"
+                   className="photo-upload-btn"
+                  disabled={uploadingImage}
+                  onClick={() => document.getElementById("product-file-input")?.click()}
+                >
+                  <Upload /> {uploadingImage ? "Uploading from phone/device…" : "Upload photo"}
+                </Button>
+                <span className="photo-upload-or">or paste an image link:</span>
+              </div>
+                 <Input
+                   id="product-image"
+                   type="url"
+                   placeholder="https://… (or upload directly above)"
+                   value={draftProduct.image_url}
+                   onChange={(event) => setDraftProduct({ ...draftProduct, image_url: event.target.value })}
+                 />
+                 {draftProduct.image_url && (
+                   <div className="product-preview-wrap">
+                     <img className="product-image-preview" src={draftProduct.image_url} alt="Product preview" />
+                     <Button
+                       type="button"
+                       variant="ghost"
+                       size="sm"
+                       onClick={() => setDraftProduct({ ...draftProduct, image_url: "" })}
+                     >
+                       <X /> Remove photo
+                     </Button>
+                   </div>
+                 )}
+               </div>
+              <div className="form-span-two"><label htmlFor="product-variants">Sizes, colours or options <span>· Separate with commas</span></label><Input id="product-variants" placeholder="S, M, L · or Wine, Black" value={draftProduct.variants} onChange={(event) => setDraftProduct({ ...draftProduct, variants: event.target.value })} /></div><div className="form-span-two"><label htmlFor="product-description">A little about this piece</label><Textarea id="product-description" placeholder="What makes it special?" value={draftProduct.description} onChange={(event) => setDraftProduct({ ...draftProduct, description: event.target.value })} /></div></div><div className="product-form-actions"><span><Upload /> Product photo should be a link anyone can open.</span><Button disabled={busy} onClick={() => void saveProduct()}>{busy ? "Saving…" : editingProductId ? "Save changes" : "Add this piece"} <Check /></Button></div></div>
             <div className="vendor-product-list">{products.length ? products.map((product) => <article className={`vendor-product-row ${product.visible ? "" : "is-hidden"}`} key={product.id}><img src={product.image_url} alt="" width={68} height={82} /><div className="vendor-product-name"><span>{product.category}{product.visible ? "" : " · Hidden"}</span><h3>{product.name}</h3><small>{product.stock} in stock · {product.variants.join(", ") || "One size"}</small></div><strong>{formatNaira(product.price)}</strong><Button variant="ghost" size="icon" aria-label={`Edit ${product.name}`} onClick={() => editProduct(product)}><Settings2 /></Button><Button variant="ghost" size="icon" aria-label={product.visible ? `Hide ${product.name}` : `Show ${product.name}`} onClick={() => void toggleProduct(product)}>{product.visible ? <EyeOff /> : <Eye />}</Button><Button variant="ghost" size="icon" aria-label={`Delete ${product.name}`} onClick={() => void deleteProduct(product)}><Trash2 /></Button></article>) : <div className="empty-dashboard-note">No pieces yet — add your first one above.</div>}</div>
           </TabsContent>
           <TabsContent value="orders" className="dashboard-tab-content">
@@ -554,6 +698,55 @@ export function VendorDashboard() {
               </div>
             </>
           )}
+        </SheetContent>
+      </Sheet>
+
+      <Sheet open={Boolean(upgradeTier)} onOpenChange={(open) => !open && setUpgradeTier(null)}>
+        <SheetContent side="right" className="order-details-sheet">
+          <SheetHeader className="order-details-header">
+            <p className="eyebrow">Shop upgrade</p>
+            <SheetTitle>
+              {upgradeTier === "credits" ? "50 Order Credits" : "Unlimited Monthly Plan"}
+            </SheetTitle>
+            <SheetDescription>
+              {upgradeTier === "credits"
+                ? "Top up your shop with 50 additional order credits that never expire."
+                : "Remove monthly order limits and take unlimited orders every month."}
+            </SheetDescription>
+          </SheetHeader>
+
+          <div className="order-details-body" style={{ marginTop: "1rem" }}>
+            <div className="order-details-card">
+              <h4>Upgrade summary</h4>
+              <p style={{ margin: "0.25rem 0", fontSize: "14px" }}>
+                Tier: <strong>{upgradeTier === "credits" ? "50 Extra Order Credits" : "Unlimited Orders / Month"}</strong>
+              </p>
+              <p style={{ margin: "0.25rem 0", fontSize: "14px" }}>
+                Amount: <strong style={{ fontSize: "16px" }}>{upgradeTier === "credits" ? "₦500" : "₦2,000"}</strong>
+              </p>
+              <p style={{ margin: "0.5rem 0 0", color: "var(--muted-foreground)", fontSize: "12px", lineHeight: "1.5" }}>
+                {upgradeTier === "credits"
+                  ? "Your 50 extra orders will activate immediately on your vendor profile and automatically apply whenever your 30 free monthly limit is reached."
+                  : "Your shop will be switched to the Unlimited plan with infinite monthly order capacity."}
+              </p>
+            </div>
+
+            <div style={{ display: "grid", gap: "8px", marginTop: "1.5rem" }}>
+              <Button
+                disabled={upgradeBusy}
+                onClick={() => void handleUpgradeConfirm()}
+              >
+                {upgradeBusy ? "Activating upgrade…" : `Confirm & Activate for ${upgradeTier === "credits" ? "₦500" : "₦2,000"}`} <Check />
+              </Button>
+              <Button
+                variant="outline"
+                disabled={upgradeBusy}
+                onClick={() => setUpgradeTier(null)}
+              >
+                Cancel
+              </Button>
+            </div>
+          </div>
         </SheetContent>
       </Sheet>
     </main>
