@@ -7,6 +7,7 @@ import {
   Check,
   ChevronRight,
   CircleCheck,
+  Copy,
   Heart,
   Instagram,
   Menu,
@@ -67,7 +68,8 @@ export function Storefront({ storeSlug }: { storeSlug: string }) {
   const [customerPhone, setCustomerPhone] = useState("");
   const [deliveryZone, setDeliveryZone] = useState("Lagos Mainland");
   const [order, setOrder] = useState<PlacedOrder | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(() => storeSlug !== DEMO_SLUG);
+  const [accountCopied, setAccountCopied] = useState(false);
 
   const isDemo = storeSlug === DEMO_SLUG;
 
@@ -213,7 +215,13 @@ export function Storefront({ storeSlug }: { storeSlug: string }) {
     setCheckoutOpen(false);
     setCartOpen(true);
     const text = buildWhatsAppOrderMessage({
-      ...createdOrder,
+      orderNumber: createdOrder.order_number,
+      customerName: createdOrder.customer_name,
+      customerPhone: createdOrder.customer_phone,
+      deliveryZone: createdOrder.delivery_zone,
+      deliveryFee: createdOrder.delivery_fee,
+      subtotal: createdOrder.subtotal,
+      total: createdOrder.total,
       items: createdOrder.items.map((item) => ({
         name: item.product.name,
         quantity: item.quantity,
@@ -231,6 +239,8 @@ export function Storefront({ storeSlug }: { storeSlug: string }) {
   const copyAccount = async () => {
     try {
       await navigator.clipboard.writeText(profile.bank_account);
+      setAccountCopied(true);
+      window.setTimeout(() => setAccountCopied(false), 2000);
       toast.success("Account number copied");
     } catch {
       toast.error("Couldn’t copy — please copy the number manually.");
