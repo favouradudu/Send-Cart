@@ -119,8 +119,6 @@ export function VendorDashboard() {
     setLoadingItems(false);
   };
 
-  useEffect(() => {
-    let active = true;
     const handlePhotoUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
@@ -196,7 +194,9 @@ export function VendorDashboard() {
       setUpgradeBusy(false);
     }
   };
-    
+
+    useEffect(() => {
+    let active = true;
     const { data: listener } = supabase.auth.onAuthStateChange((event, session) => {
       if (!active || (event !== "SIGNED_IN" && event !== "SIGNED_OUT" && event !== "USER_UPDATED")) return;
       setUserId(session?.user.id ?? null);
@@ -264,10 +264,10 @@ export function VendorDashboard() {
 
         const { data: created, error: createError } = await supabase
           .from("profiles")
-          .insert(newProfile)
+          .insert(newProfile as any)
           .select()
           .maybeSingle();
-
+        
         if (!createError && created) {
           currentProfile = created as unknown as ShopProfile;
           toast.success("Welcome! We set up your starter shop.");
@@ -436,18 +436,21 @@ export function VendorDashboard() {
       toast.error("Add your shop name, WhatsApp number and a 10-digit account number.");
       return;
     }
-    const { error } = await supabase.from("profiles").update({
-      store_name: settings.store_name.trim(),
-      bio: settings.bio.trim(),
-      avatar_url: settings.avatar_url.trim(),
-      whatsapp_phone: settings.whatsapp_phone.trim(),
-      instagram_handle: settings.instagram_handle.replace(/^@/, "").trim(),
-      bank_name: settings.bank_name.trim(),
-      bank_account: settings.bank_account.replace(/\D/g, ""),
-      bank_account_name: settings.bank_account_name.trim(),
-      delivery_zones: settings.delivery_zones,
-      store_theme: settings.store_theme || "editorial",
-    }).eq("id", userId);
+    const { error } = await supabase
+      .from("profiles")
+      .update({
+        store_name: settings.store_name.trim(),
+        bio: settings.bio.trim(),
+        avatar_url: settings.avatar_url.trim(),
+        whatsapp_phone: settings.whatsapp_phone.trim(),
+        instagram_handle: settings.instagram_handle.replace(/^@/, "").trim(),
+        bank_name: settings.bank_name.trim(),
+        bank_account: settings.bank_account.replace(/\D/g, ""),
+        bank_account_name: settings.bank_account_name.trim(),
+        delivery_zones: settings.delivery_zones,
+        store_theme: settings.store_theme || "editorial",
+      } as any)
+      .eq("id", userId);
     if (error) {
       toast.error("We couldn’t save your shop settings.");
       return;
