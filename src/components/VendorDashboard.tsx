@@ -398,12 +398,12 @@ export function VendorDashboard() {
       : await supabase.from("products").insert(values).select().single();
     setBusy(false);
     if (result.error) {
-      toast.error("We couldn’t save this piece. Please check the details and try again.");
+      toast.error("We couldn’t save this product. Please check the details and try again.");
       return;
     }
     const saved = result.data as unknown as ShopProduct;
     setProducts((current) => editingProductId ? current.map((product) => product.id === saved.id ? saved : product) : [saved, ...current]);
-    toast.success(editingProductId ? "Piece updated." : "New piece added.");
+    toast.success(editingProductId ? "Product updated." : "New product added.");
     resetProductForm();
   };
 
@@ -411,7 +411,7 @@ export function VendorDashboard() {
     if (!userId) return;
     const { error } = await supabase.from("products").update({ visible: !product.visible }).eq("id", product.id).eq("vendor_id", userId);
     if (error) {
-      toast.error("We couldn’t update this piece.");
+      toast.error("We couldn’t update this product.");
       return;
     }
     setProducts((current) => current.map((item) => item.id === product.id ? { ...item, visible: !item.visible } : item));
@@ -421,11 +421,11 @@ export function VendorDashboard() {
     if (!userId || !window.confirm(`Remove ${product.name} from your catalog?`)) return;
     const { error } = await supabase.from("products").delete().eq("id", product.id).eq("vendor_id", userId);
     if (error) {
-      toast.error("We couldn’t remove this piece.");
+      toast.error("We couldn’t remove this product.");
       return;
     }
     setProducts((current) => current.filter((item) => item.id !== product.id));
-    toast.success("Piece removed.");
+    toast.success("Product removed.");
   };
 
   const saveSettings = async () => {
@@ -499,7 +499,7 @@ export function VendorDashboard() {
           <span className="auth-monogram">S</span>
           <p className="eyebrow">A little room of your own</p>
           <h1>{authMode === "signin" ? "Welcome back." : "Let’s open your shop."}</h1>
-          <p className="auth-description">{authMode === "signin" ? "Sign in to check in on your orders and lovely pieces." : "Create your account. Your shop profile is made as soon as you join."}</p>
+          <p className="auth-description">{authMode === "signin" ? "Sign in to manage your orders and products." : "Create your account. Your shop profile is made as soon as you join."}</p>
           <Button variant="outline" className="social-login-button" disabled={authBusy} onClick={() => void socialSignIn("google")}><GoogleMark /> Continue with Google</Button>
           <div className="form-divider"><span>or with your email</span></div>
           <label htmlFor="vendor-email">Email address</label><Input id="vendor-email" type="email" autoComplete="email" placeholder="you@example.com" value={email} onChange={(event) => setEmail(event.target.value)} />
@@ -530,7 +530,7 @@ export function VendorDashboard() {
         <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as DashboardTab)}>
           <TabsList className="dashboard-tabs"><TabsTrigger value="overview">Overview</TabsTrigger><TabsTrigger value="products">Products</TabsTrigger><TabsTrigger value="orders">Orders {pendingOrders > 0 && <span className="tab-notification">{pendingOrders}</span>}</TabsTrigger><TabsTrigger value="settings">Shop settings</TabsTrigger></TabsList>
           <TabsContent value="overview" className="dashboard-tab-content">
-            <div className="stats-grid"><article className="stat-block"><span>Orders this month</span><strong>{monthCount}<small> / {profile.plan === "unlimited" ? "∞" : monthlyOrderLimit}</small></strong><p>{profile.plan === "unlimited" ? "Unlimited orders" : `${Math.max(0, monthlyOrderLimit - monthCount)} orders left on your free plan`}</p></article><article className="stat-block"><span>On the rails</span><strong>{pendingOrders}</strong><p>Waiting for your confirmation</p></article><article className="stat-block"><span>On your shop floor</span><strong>{visibleProducts.length}</strong><p>Pieces customers can discover</p></article></div>
+            <div className="stats-grid"><article className="stat-block"><span>Orders this month</span><strong>{monthCount}<small> / {profile.plan === "unlimited" ? "∞" : monthlyOrderLimit}</small></strong><p>{profile.plan === "unlimited" ? "Unlimited orders" : `${Math.max(0, monthlyOrderLimit - monthCount)} orders left on your free plan`}</p></article><article className="stat-block"><span>On the rails</span><strong>{pendingOrders}</strong><p>Waiting for your confirmation</p></article><article className="stat-block"><span>On your shop floor</span><strong>{visibleProducts.length}</strong><p>Products customers can order</p></article></div>
             <div className="dashboard-overview-columns"><section className="dashboard-section orders-preview"><div className="dashboard-section-heading"><div><p className="eyebrow">The latest from your customers</p><h2>Recent orders</h2></div><Button variant="ghost" onClick={() => setActiveTab("orders")}>All orders <ArrowRight /></Button></div>{orders.slice(0, 3).length ? orders.slice(0, 3).map((order) => <OrderRow key={order.id} order={order} onOpen={() => setActiveTab("orders")} />) : <p className="empty-dashboard-note">Your first order will find its way here.</p>}</section><section className="dashboard-section share-preview"><p className="eyebrow">A shop of your own</p><h2>Share a little of<br />what you love.</h2><p>One lovely link for WhatsApp, your bio and everywhere you say hello.</p><div className="share-link-box"><span>{storeLink.replace(/^https?:\/\//, "") || "your-shop-link"}</span><Button size="icon" variant="ghost" aria-label="Copy shop link" onClick={() => void copyStoreLink()}><Copy /></Button></div><div className="share-qr"><QRCodeSVG value={storeLink || "https://example.com"} size={104} includeMargin bgColor="transparent" fgColor="currentColor" aria-label="Shop link QR code" /><span>Point your camera<br />to find our shop</span></div></section></div>
             <section className="plan-strip"><div className="plan-icon"><Sparkles /></div><div><p className="eyebrow">A little breathing room</p><h2>Made for the way you sell.</h2><p>Free for your first 30 orders each month. Grow at your own pace, always keeping your money direct.</p></div>
               <div className="plan-prices">
@@ -555,10 +555,10 @@ export function VendorDashboard() {
             </section>
           </TabsContent>
           <TabsContent value="products" className="dashboard-tab-content">
-            <div className="dashboard-section-heading products-page-heading"><div><p className="eyebrow">The pieces you’re proud of</p><h2>Your catalog <span>· {products.length}</span></h2></div><Button onClick={resetProductForm}><Plus /> Add a piece</Button></div>
-            <div className="product-editor" id="product-editor"><div className="product-editor-heading"><div><p className="eyebrow">{editingProductId ? "A little adjustment" : "A new favourite"}</p><h3>{editingProductId ? "Edit this piece" : "Add to your shop"}</h3></div>{editingProductId && <Button variant="ghost" size="icon" aria-label="Cancel editing" onClick={resetProductForm}><X /></Button>}</div><div className="product-form-grid"><div className="form-span-two"><label htmlFor="product-name">Piece name</label><Input id="product-name" placeholder="e.g. The Kemi Linen Set" value={draftProduct.name} onChange={(event) => setDraftProduct({ ...draftProduct, name: event.target.value })} /></div><div><label htmlFor="product-category">Collection</label><select className="dashboard-select" id="product-category" value={draftProduct.category} onChange={(event) => setDraftProduct({ ...draftProduct, category: event.target.value })}><option>Best Sellers</option><option>New Arrivals</option><option>Sale</option></select></div><div><label htmlFor="product-price">Price · ₦</label><Input id="product-price" type="number" min="0" inputMode="numeric" placeholder="48500" value={draftProduct.price} onChange={(event) => setDraftProduct({ ...draftProduct, price: event.target.value })} /></div><div><label htmlFor="product-sale-price">Original price, if on sale</label><Input id="product-sale-price" type="number" min="0" inputMode="numeric" placeholder="Optional" value={draftProduct.compare_at_price} onChange={(event) => setDraftProduct({ ...draftProduct, compare_at_price: event.target.value })} /></div><div><label htmlFor="product-stock">Available pieces</label><Input id="product-stock" type="number" min="0" inputMode="numeric" placeholder="5" value={draftProduct.stock} onChange={(event) => setDraftProduct({ ...draftProduct, stock: event.target.value })} /></div>
+            <div className="dashboard-section-heading products-page-heading"><div><p className="eyebrow">Your inventory & items</p><h2>Your catalog <span>· {products.length}</span></h2></div><Button onClick={resetProductForm}><Plus /> Add product</Button></div>
+            <div className="product-editor" id="product-editor"><div className="product-editor-heading"><div><p className="eyebrow">{editingProductId ? "Update listing" : "New listing"}</p><h3>{editingProductId ? "Edit product" : "Add to your shop"}</h3></div>{editingProductId && <Button variant="ghost" size="icon" aria-label="Cancel editing" onClick={resetProductForm}><X /></Button>}</div><div className="product-form-grid"><div className="form-span-two"><label htmlFor="product-name">Product name</label><Input id="product-name" placeholder="e.g. iPhone 13 Pro, Amber Vanilla Oil, or Linen Set" value={draftProduct.name} onChange={(event) => setDraftProduct({ ...draftProduct, name: event.target.value })} /></div><div><label htmlFor="product-category">Category / Tag</label><select className="dashboard-select" id="product-category" value={draftProduct.category} onChange={(event) => setDraftProduct({ ...draftProduct, category: event.target.value })}><option>Best Sellers</option><option>New Arrivals</option><option>Sale</option></select></div><div><label htmlFor="product-price">Price · ₦</label><Input id="product-price" type="number" min="0" inputMode="numeric" placeholder="48500" value={draftProduct.price} onChange={(event) => setDraftProduct({ ...draftProduct, price: event.target.value })} /></div><div><label htmlFor="product-sale-price">Original price, if on sale</label><Input id="product-sale-price" type="number" min="0" inputMode="numeric" placeholder="Optional" value={draftProduct.compare_at_price} onChange={(event) => setDraftProduct({ ...draftProduct, compare_at_price: event.target.value })} /></div><div><label htmlFor="product-stock">Available stock / quantity</label><Input id="product-stock" type="number" min="0" inputMode="numeric" placeholder="5" value={draftProduct.stock} onChange={(event) => setDraftProduct({ ...draftProduct, stock: event.target.value })} /></div>
               <div className="form-span-two">
-                <label htmlFor="product-image">Piece photo</label>
+                <label htmlFor="product-image">Product photo</label>
                <div className="photo-upload-row">
                  <input
                    type="file"
@@ -578,7 +578,7 @@ export function VendorDashboard() {
                 >
                   <Upload /> {uploadingImage ? "Uploading from phone/device…" : "Upload photo"}
                 </Button>
-                <span className="photo-upload-or">or paste an image link:</span>
+                <span className="photo upoad-or">or paste an image link:</span>
               </div>
                  <Input
                    id="product-image"
@@ -601,8 +601,23 @@ export function VendorDashboard() {
                    </div>
                  )}
                </div>
-              <div className="form-span-two"><label htmlFor="product-variants">Sizes, colours or options <span>· Separate with commas</span></label><Input id="product-variants" placeholder="S, M, L · or Wine, Black" value={draftProduct.variants} onChange={(event) => setDraftProduct({ ...draftProduct, variants: event.target.value })} /></div><div className="form-span-two"><label htmlFor="product-description">A little about this piece</label><Textarea id="product-description" placeholder="What makes it special?" value={draftProduct.description} onChange={(event) => setDraftProduct({ ...draftProduct, description: event.target.value })} /></div></div><div className="product-form-actions"><span><Upload /> Product photo should be a link anyone can open.</span><Button disabled={busy} onClick={() => void saveProduct()}>{busy ? "Saving…" : editingProductId ? "Save changes" : "Add this piece"} <Check /></Button></div></div>
-            <div className="vendor-product-list">{products.length ? products.map((product) => <article className={`vendor-product-row ${product.visible ? "" : "is-hidden"}`} key={product.id}><img src={product.image_url} alt="" width={68} height={82} /><div className="vendor-product-name"><span>{product.category}{product.visible ? "" : " · Hidden"}</span><h3>{product.name}</h3><small>{product.stock} in stock · {product.variants.join(", ") || "One size"}</small></div><strong>{formatNaira(product.price)}</strong><Button variant="ghost" size="icon" aria-label={`Edit ${product.name}`} onClick={() => editProduct(product)}><Settings2 /></Button><Button variant="ghost" size="icon" aria-label={product.visible ? `Hide ${product.name}` : `Show ${product.name}`} onClick={() => void toggleProduct(product)}>{product.visible ? <EyeOff /> : <Eye />}</Button><Button variant="ghost" size="icon" aria-label={`Delete ${product.name}`} onClick={() => void deleteProduct(product)}><Trash2 /></Button></article>) : <div className="empty-dashboard-note">No pieces yet — add your first one above.</div>}</div>
+              <div className="form-span-two">
+                <div className="variant-field-header">
+                  <label htmlFor="product-variants">Options or variants <span>· Separate with commas</span></label>
+                  <div className="variant-quick-chips">
+                    <span className="chips-label">Quick fill:</span>
+                    <button type="button" className="quick-chip" onClick={() => setDraftProduct({ ...draftProduct, variants: "128GB, 256GB, 512GB" })}>📱 Storage</button>
+                    <button type="button" className="quick-chip" onClick={() => setDraftProduct({ ...draftProduct, variants: "3ml, 6ml, 12ml, 50ml" })}>🌸 Perfume</button>
+                    <button type="button" className="quick-chip" onClick={() => setDraftProduct({ ...draftProduct, variants: "S, M, L, XL" })}>👗 Fashion</button>
+                    <button type="button" className="quick-chip" onClick={() => setDraftProduct({ ...draftProduct, variants: "UK Used, Brand New" })}>📦 Condition</button>
+                  </div>
+                </div>
+                <Input id="product-variants" placeholder="e.g. 128GB, 256GB · or 3ml, 6ml · or S, M, L · or UK Used, Brand New" value={draftProduct.variants} onChange={(event) => setDraftProduct({ ...draftProduct, variants: event.target.value })} />
+              </div>
+              <div className="form-span-two"><label htmlFor="product-description">Product description</label><Textarea id="product-description" placeholder="Specifications, scent notes, condition, or size details" value={draftProduct.description} onChange={(event) => setDraftProduct({ ...draftProduct, description: event.target.value })} /></div>
+            </div>
+            <div className="product-form-actions"><span><Upload /> Product photo uploads directly or via link.</span><Button disabled={busy} onClick={() => void saveProduct()}>{busy ? "Saving…" : editingProductId ? "Save changes" : "Add this product"} <Check /></Button></div></div>
+            <div className="vendor-product-list">{products.length ? products.map((product) => <article className={`vendor-product-row ${product.visible ? "" : "is-hidden"}`} key={product.id}><img src={product.image_url} alt="" width={68} height={82} /><div className="vendor-product-name"><span>{product.category}{product.visible ? "" : " · Hidden"}</span><h3>{product.name}</h3><small>{product.stock} in stock · {product.variants.join(", ") || "Standard"}</small></div><strong>{formatNaira(product.price)}</strong><Button variant="ghost" size="icon" aria-label={`Edit ${product.name}`} onClick={() => editProduct(product)}><Settings2 /></Button><Button variant="ghost" size="icon" aria-label={product.visible ? `Hide ${product.name}` : `Show ${product.name}`} onClick={() => void toggleProduct(product)}>{product.visible ? <EyeOff /> : <Eye />}</Button><Button variant="ghost" size="icon" aria-label={`Delete ${product.name}`} onClick={() => void deleteProduct(product)}><Trash2 /></Button></article>) : <div className="empty-dashboard-note">No products yet — add your first one above.</div>}</div>
           </TabsContent>
           <TabsContent value="orders" className="dashboard-tab-content">
             <div className="dashboard-section-heading orders-page-heading"><div><p className="eyebrow">Every order, in one place</p><h2>On the way to something good.</h2></div><span className="orders-total">{orders.length} {orders.length === 1 ? "order" : "orders"}</span></div>
