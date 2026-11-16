@@ -772,3 +772,45 @@
   gap: 5px;
   cursor: pointer;
 }
+
+.variant-field-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.variant-quick-chips {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.chips-label {
+  font-size: 10px;
+  color: var(--muted-foreground);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.quick-chip {
+  background: var(--secondary, #edeae2);
+  border: 1px solid var(--border, #e2ded4);
+  border-radius: 999px;
+  font-size: 10px;
+  padding: 2px 8px;
+  cursor: pointer;
+  color: var(--foreground);
+  transition: background 0.15s ease, transform 0.1s ease;
+}
+
+.quick-chip:hover {
+  background: var(--muted, #dfdacd);
+}
+
+.quick-chip:active {
+  transform: scale(0.97);
+}
