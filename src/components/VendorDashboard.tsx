@@ -329,7 +329,7 @@ export function VendorDashboard() {
     }
   };
 
-  const socialSignIn = async (provider: "google" | "lovable") => {
+  const socialSignIn = async (provider: "google") => {
     setAuthBusy(true);
     try {
       const { error } = await lovable.auth.signInWithOAuth(provider, { redirect_uri: window.location.origin });
@@ -489,19 +489,18 @@ export function VendorDashboard() {
     setNewZoneFee("");
   };
 
-  if (loading) return <main className="dashboard-loading"><span className="brand-wordmark">aura<span>threads</span></span><p>Opening your little corner of the internet…</p></main>;
+  if (loading) return <main className="dashboard-loading"><span className="brand-wordmark">send<span>cart</span></span><p>Opening your little corner of the internet…</p></main>;
 
   if (!userId || !profile) {
     return (
       <main className="auth-page">
         <a href="/" className="auth-back-link"><ArrowRight className="back-arrow" /> Back to the shop</a>
         <div className="auth-card">
-          <span className="auth-monogram">A</span>
+          <span className="auth-monogram">S</span>
           <p className="eyebrow">A little room of your own</p>
           <h1>{authMode === "signin" ? "Welcome back." : "Let’s open your shop."}</h1>
           <p className="auth-description">{authMode === "signin" ? "Sign in to check in on your orders and lovely pieces." : "Create your account. Your shop profile is made as soon as you join."}</p>
           <Button variant="outline" className="social-login-button" disabled={authBusy} onClick={() => void socialSignIn("google")}><GoogleMark /> Continue with Google</Button>
-          <Button variant="outline" className="social-login-button" disabled={authBusy} onClick={() => void socialSignIn("lovable")}><span className="lovable-mark">L</span> Continue with Lovable</Button>
           <div className="form-divider"><span>or with your email</span></div>
           <label htmlFor="vendor-email">Email address</label><Input id="vendor-email" type="email" autoComplete="email" placeholder="you@example.com" value={email} onChange={(event) => setEmail(event.target.value)} />
           <label htmlFor="vendor-password">Password</label><Input id="vendor-password" type="password" autoComplete={authMode === "signin" ? "current-password" : "new-password"} placeholder="At least 6 characters" value={password} onChange={(event) => setPassword(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter") void signIn(); }} />
@@ -519,7 +518,7 @@ export function VendorDashboard() {
   return (
     <main className="dashboard-page">
       <header className="dashboard-topbar">
-        <a className="brand-wordmark" href="/">aura<span>threads</span></a>
+        <a className="brand-wordmark" href="/">send<span>cart</span></a>
         <span className="dashboard-store-label"><Store /> {profile.store_name}<span className="dashboard-status"><BadgeCheck /> Shop is open</span></span>
         <div className="dashboard-top-actions"><Button asChild variant="outline"><a href={storeLink} target="_blank" rel="noreferrer"><ExternalLink /> View my shop</a></Button><Button variant="ghost" size="icon" aria-label="Sign out" onClick={() => void signOut()}><LogOut /></Button></div>
       </header>
