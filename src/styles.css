@@ -831,3 +831,244 @@
 .quick-chip:active {
   transform: scale(0.97);
 }
+
+/* ==========================================================================
+   Store Vibe / Theme Presets
+   ========================================================================== */
+
+/* 1. Modern / Tech Preset */
+.storefront[data-theme="modern"] {
+  --font-display: "Space Grotesk", "Work Sans", -apple-system, sans-serif;
+  --background: oklch(1 0 0); /* Pure studio white #ffffff */
+  --foreground: oklch(0.2 0.03 260); /* Deep slate #0f172a */
+  --card: oklch(0.985 0.005 260);
+  --card-foreground: oklch(0.2 0.03 260);
+  --muted: oklch(0.96 0.01 260);
+  --muted-foreground: oklch(0.48 0.03 260);
+  --border: oklch(0.9 0.015 260);
+  --input: oklch(0.88 0.02 260);
+  --primary: oklch(0.55 0.22 260); /* Electric cobalt blue */
+  --primary-foreground: oklch(1 0 0);
+  --secondary: oklch(0.95 0.02 260);
+  --secondary-foreground: oklch(0.2 0.03 260);
+  --accent: oklch(0.92 0.05 260);
+  --accent-foreground: oklch(0.25 0.15 260);
+  --radius: 0.5rem;
+}
+
+.storefront[data-theme="modern"] .editorial-copy h1 em,
+.storefront[data-theme="modern"] .section-intro h2 em,
+.storefront[data-theme="modern"] .small-business-note h2 em {
+  color: var(--primary);
+  font-style: normal;
+}
+
+.storefront[data-theme="modern"] .announcement-bar {
+  background: var(--primary);
+  color: #ffffff;
+}
+
+.storefront[data-theme="modern"] .brand-wordmark span {
+  color: var(--primary);
+}
+
+.storefront[data-theme="modern"] .quick-add,
+.storefront[data-theme="modern"] .photo-tag,
+.storefront[data-theme="modern"] .stock-counter {
+  border-radius: 6px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+/* 2. Bold / Street Preset */
+.storefront[data-theme="bold"] {
+  --font-display: "Work Sans", -apple-system, sans-serif;
+  --background: oklch(0.99 0 0); /* Stark white */
+  --foreground: oklch(0.1 0 0); /* Deep solid black */
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.1 0 0);
+  --muted: oklch(0.92 0 0);
+  --muted-foreground: oklch(0.4 0 0);
+  --border: oklch(0.1 0 0); /* Graphic solid black borders */
+  --input: oklch(0.1 0 0);
+  --primary: oklch(0.1 0 0);
+  --primary-foreground: oklch(1 0 0);
+  --secondary: oklch(0.9 0 0);
+  --secondary-foreground: oklch(0.1 0 0);
+  --radius: 0px; /* Sharp corners */
+}
+
+.storefront[data-theme="bold"] .editorial-copy h1,
+.storefront[data-theme="bold"] .section-intro h2,
+.storefront[data-theme="bold"] .product-details h3,
+.storefront[data-theme="bold"] .brand-wordmark {
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  text-transform: uppercase;
+}
+
+.storefront[data-theme="bold"] .editorial-copy h1 em,
+.storefront[data-theme="bold"] .section-intro h2 em,
+.storefront[data-theme="bold"] .small-business-note h2 em {
+  font-style: normal;
+  text-decoration: underline;
+  text-decoration-thickness: 3px;
+  text-underline-offset: 4px;
+}
+
+.storefront[data-theme="bold"] .announcement-bar {
+  background: #000000;
+  color: #ffffff;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+}
+
+.storefront[data-theme="bold"] .photo-tag,
+.storefront[data-theme="bold"] .stock-counter {
+  border: 1px solid #000000;
+  font-weight: 700;
+}
+
+.storefront[data-theme="bold"] .quick-add {
+  border: 1.5px solid #000000;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+/* ==========================================================================
+   Dashboard Theme Preset Picker UI
+   ========================================================================== */
+.theme-setting-group {
+  grid-column: 1 / -1;
+  margin-bottom: 24px;
+}
+
+.theme-presets-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+  margin-top: 10px;
+}
+
+@media (min-width: 640px) {
+  .theme-presets-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+.theme-card {
+  display: flex;
+  flex-direction: column;
+  background: var(--background);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+  text-align: left;
+  cursor: pointer;
+  padding: 0;
+  transition: all 0.15s ease;
+}
+
+.theme-card:hover {
+  border-color: var(--foreground);
+  transform: translateY(-2px);
+}
+
+.theme-card.is-active {
+  border-color: var(--foreground);
+  box-shadow: 0 0 0 2px var(--foreground);
+}
+
+.theme-swatch {
+  height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 14px;
+}
+
+.editorial-swatch {
+  background: #f5f3ee;
+  color: #2d2d2d;
+  font-family: "Instrument Serif", Georgia, serif;
+}
+
+.modern-swatch {
+  background: #0f172a;
+  color: #38bdf8;
+  font-family: "Space Grotesk", sans-serif;
+}
+
+.bold-swatch {
+  background: #000000;
+  color: #ffffff;
+  font-family: "Work Sans", sans-serif;
+  font-weight: 800;
+}
+
+.swatch-font {
+  font-size: 26px;
+  line-height: 1;
+}
+
+.swatch-pill {
+  font-size: 10px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.18);
+  backdrop-filter: blur(4px);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-weight: 600;
+}
+
+.editorial-swatch .swatch-pill {
+  background: rgba(0, 0, 0, 0.07);
+  color: #2d2d2d;
+}
+
+.theme-info {
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1;
+}
+
+.theme-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.theme-header h4 {
+  font-size: 13px;
+  font-weight: 600;
+  margin: 0;
+  color: var(--foreground);
+}
+
+.theme-active-tag {
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  background: var(--foreground);
+  color: var(--background);
+  padding: 1px 6px;
+  border-radius: 999px;
+  font-weight: 600;
+}
+
+.theme-font-tag {
+  font-size: 10px;
+  color: var(--muted-foreground);
+  margin: 0;
+  font-family: var(--font-sans);
+}
+
+.theme-desc {
+  font-size: 11px;
+  color: var(--muted-foreground);
+  margin: 4px 0 0;
+  line-height: 1.35;
+  }
+  
