@@ -684,7 +684,283 @@ export function VendorDashboard() {
              </div>
           </TabsContent>
           <TabsContent value="settings" className="dashboard-tab-content">
-            {settings && <><div className="dashboard-section-heading settings-heading"><div><p className="eyebrow">The details customers see</p><h2>Your shop, your way.</h2></div><Button onClick={() => void saveSettings()}>Save shop details <Check /></Button></div><div className="settings-columns"><div className="settings-column"><section className="settings-group"><div className="settings-group-title"><Store /><div><h3>A warm hello</h3><p>Your name and the note that goes with it.</p></div></div><label htmlFor="settings-shop-name">Shop name</label><Input id="settings-shop-name" value={settings.store_name} onChange={(event) => setSettings({ ...settings, store_name: event.target.value })} /><label htmlFor="settings-bio">A little note about your shop</label><Textarea id="settings-bio" rows={3} value={settings.bio} onChange={(event) => setSettings({ ...settings, bio: event.target.value })} /><label htmlFor="settings-photo">Shop photo link</label><Input id="settings-photo" placeholder="https://…" value={settings.avatar_url} onChange={(event) => setSettings({ ...settings, avatar_url: event.target.value })} /><label htmlFor="settings-instagram">Instagram name</label><Input id="settings-instagram" placeholder="yourshop.ng" value={settings.instagram_handle} onChange={(event) => setSettings({ ...settings, instagram_handle: event.target.value })} /></section><section className="settings-group"><div className="settings-group-title"><Banknote /><div><h3>Paid straight to you</h3><p>Your customers transfer directly to this account.</p></div></div><label htmlFor="settings-bank">Bank name</label><Input id="settings-bank" placeholder="e.g. Access Bank" value={settings.bank_name} onChange={(event) => setSettings({ ...settings, bank_name: event.target.value })} /><label htmlFor="settings-account-number">Account number</label><Input id="settings-account-number" inputMode="numeric" maxLength={10} placeholder="10 digits" value={settings.bank_account} onChange={(event) => setSettings({ ...settings, bank_account: event.target.value.replace(/\D/g, "").slice(0, 10) })} /><label htmlFor="settings-account-name">Account name</label><Input id="settings-account-name" value={settings.bank_account_name} onChange={(event) => setSettings({ ...settings, bank_account_name: event.target.value })} /></section></div><div className="settings-column"><section className="settings-group"><div className="settings-group-title"><Truck /><div><h3>Getting there</h3><p>Set the flat delivery rate for each area you serve.</p></div></div>{Object.entries(settings.delivery_zones).map(([zone, detail]) => <div className="zone-row" key={zone}><Input aria-label={`${zone} delivery area`} value={zone} onChange={(event) => { const nextZones = { ...settings.delivery_zones }; const updated = nextZones[zone]; delete nextZones[zone]; if (updated) nextZones[event.target.value] = updated; setSettings({ ...settings, delivery_zones: nextZones }); }} /><div className="zone-fee-input"><span>₦</span><Input aria-label={`${zone} delivery fee`} inputMode="numeric" value={detail.fee} onChange={(event) => setSettings({ ...settings, delivery_zones: { ...settings.delivery_zones, [zone]: { fee: Number(event.target.value) || 0 } } })} /><Button variant="ghost" size="icon" aria-label={`Remove ${zone}`} onClick={() => { const zones = { ...settings.delivery_zones }; delete zones[zone]; setSettings({ ...settings, delivery_zones: zones }); }}><X /></Button></div></div>)}<div className="add-zone-fields"><Input aria-label="New delivery area" placeholder="Area name" value={newZone} onChange={(event) => setNewZone(event.target.value)} /><Input aria-label="New delivery fee" type="number" min="0" placeholder="Delivery fee in ₦" value={newZoneFee} onChange={(event) => setNewZoneFee(event.target.value)} /><Button variant="outline" aria-label="Add delivery area" onClick={addDeliveryZone}><Plus /></Button></div></section><section className="settings-group"><div className="settings-group-title"><ShoppingBag /><div><h3>Say hello on WhatsApp</h3><p>Order updates and questions go straight to you.</p></div></div><label htmlFor="settings-whatsapp">WhatsApp number</label><Input id="settings-whatsapp" type="tel" placeholder="080 1234 5678" value={settings.whatsapp_phone} onChange={(event) => setSettings({ ...settings, whatsapp_phone: event.target.value })} /></section><section className="settings-group"><div className="settings-group-title"><Sparkles /><div><h3>Your little shop link</h3><p>Made for WhatsApp status, Instagram bio and messages.</p></div></div><div className="share-link-box"><span>{storeLink.replace(/^https?:\/\//, "")}</span><Button size="icon" variant="ghost" aria-label="Copy shop link" onClick={() => void copyStoreLink()}><Copy /></Button></div><a className="text-link" href={storeLink} target="_blank" rel="noreferrer">Open your shop <ExternalLink /></a></section></div></div></>}
+            {settings && (
+              <>
+                <div className="dashboard-section-heading settings-heading">
+                  <div>
+                    <p className="eyebrow">The details customers see</p>
+                    <h2>Your shop, your way.</h2>
+                  </div>
+                  <Button onClick={() => void saveSettings()}>
+                    Save shop details <Check />
+                  </Button>
+                </div>
+
+                <div className="settings-columns">
+                  {/* === Store Vibe & Aesthetics Preset Selector === */}
+                  <section className="settings-group theme-setting-group">
+                    <div className="settings-group-title">
+                      <Palette />
+                      <div>
+                        <h3>Store Vibe & Aesthetics</h3>
+                        <p>Pick a curated design preset tailored to your niche.</p>
+                      </div>
+                    </div>
+                    <div className="theme-presets-grid">
+                      <button
+                        type="button"
+                        className={`theme-card ${(!settings.store_theme || settings.store_theme === "editorial") ? "is-active" : ""}`}
+                        onClick={() => setSettings({ ...settings, store_theme: "editorial" })}
+                      >
+                        <div className="theme-swatch editorial-swatch">
+                          <span className="swatch-font">Aa</span>
+                          <span className="swatch-pill">Warm Paper</span>
+                        </div>
+                        <div className="theme-info">
+                          <div className="theme-header">
+                            <h4>Editorial Boutique</h4>
+                            {(!settings.store_theme || settings.store_theme === "editorial") && (
+                              <span className="theme-active-tag">Active</span>
+                            )}
+                          </div>
+                          <p className="theme-font-tag">Instrument Serif + Work Sans</p>
+                          <p className="theme-desc">Warm cream & charcoal. For fashion, jewelry, perfumes & luxury.</p>
+                        </div>
+                      </button>
+
+                      <button
+                        type="button"
+                        className={`theme-card ${settings.store_theme === "modern" ? "is-active" : ""}`}
+                        onClick={() => setSettings({ ...settings, store_theme: "modern" })}
+                      >
+                        <div className="theme-swatch modern-swatch">
+                          <span className="swatch-font">Aa</span>
+                          <span className="swatch-pill">Studio Slate</span>
+                        </div>
+                        <div className="theme-info">
+                          <div className="theme-header">
+                            <h4>Modern / Tech</h4>
+                            {settings.store_theme === "modern" && (
+                              <span className="theme-active-tag">Active</span>
+                            )}
+                          </div>
+                          <p className="theme-font-tag">Space Grotesk + Cobalt Blue</p>
+                          <p className="theme-desc">Crisp white, slate & electric blue. For phones, gadgets & sneakers.</p>
+                        </div>
+                      </button>
+
+                      <button
+                        type="button"
+                        className={`theme-card ${settings.store_theme === "bold" ? "is-active" : ""}`}
+                        onClick={() => setSettings({ ...settings, store_theme: "bold" })}
+                      >
+                        <div className="theme-swatch bold-swatch">
+                          <span className="swatch-font">AA</span>
+                          <span className="swatch-pill">High Contrast</span>
+                        </div>
+                        <div className="theme-info">
+                          <div className="theme-header">
+                            <h4>Bold / Street</h4>
+                            {settings.store_theme === "bold" && (
+                              <span className="theme-active-tag">Active</span>
+                            )}
+                          </div>
+                          <p className="theme-font-tag">Heavy Display + Monochrome</p>
+                          <p className="theme-desc">Black & white, boxy borders & punchy badges. For streetwear & drops.</p>
+                        </div>
+                      </button>
+                    </div>
+                  </section>
+
+                  {/* Column 1: Store info & Bank details */}
+                  <div className="settings-column">
+                    <section className="settings-group">
+                      <div className="settings-group-title">
+                        <Store />
+                        <div>
+                          <h3>A warm hello</h3>
+                          <p>Your name and the note that goes with it.</p>
+                        </div>
+                      </div>
+                      <label htmlFor="settings-shop-name">Shop name</label>
+                      <Input
+                        id="settings-shop-name"
+                        value={settings.store_name}
+                        onChange={(event) => setSettings({ ...settings, store_name: event.target.value })}
+                      />
+                      <label htmlFor="settings-bio">A little note about your shop</label>
+                      <Textarea
+                        id="settings-bio"
+                        rows={3}
+                        value={settings.bio}
+                        onChange={(event) => setSettings({ ...settings, bio: event.target.value })}
+                      />
+                      <label htmlFor="settings-photo">Shop photo link</label>
+                      <Input
+                        id="settings-photo"
+                        placeholder="https://…"
+                        value={settings.avatar_url}
+                        onChange={(event) => setSettings({ ...settings, avatar_url: event.target.value })}
+                      />
+                      <label htmlFor="settings-instagram">Instagram name</label>
+                      <Input
+                        id="settings-instagram"
+                        placeholder="yourshop.ng"
+                        value={settings.instagram_handle}
+                        onChange={(event) => setSettings({ ...settings, instagram_handle: event.target.value })}
+                      />
+                    </section>
+
+                    <section className="settings-group">
+                      <div className="settings-group-title">
+                        <Banknote />
+                        <div>
+                          <h3>Paid straight to you</h3>
+                          <p>Your customers transfer directly to this account.</p>
+                        </div>
+                      </div>
+                      <label htmlFor="settings-bank">Bank name</label>
+                      <Input
+                        id="settings-bank"
+                        placeholder="e.g. Access Bank"
+                        value={settings.bank_name}
+                        onChange={(event) => setSettings({ ...settings, bank_name: event.target.value })}
+                      />
+                      <label htmlFor="settings-account-number">Account number</label>
+                      <Input
+                        id="settings-account-number"
+                        inputMode="numeric"
+                        maxLength={10}
+                        placeholder="10 digits"
+                        value={settings.bank_account}
+                        onChange={(event) =>
+                          setSettings({ ...settings, bank_account: event.target.value.replace(/\D/g, "").slice(0, 10) })
+                        }
+                      />
+                      <label htmlFor="settings-account-name">Account name</label>
+                      <Input
+                        id="settings-account-name"
+                        value={settings.bank_account_name}
+                        onChange={(event) => setSettings({ ...settings, bank_account_name: event.target.value })}
+                      />
+                    </section>
+                  </div>
+
+                  {/* Column 2: Delivery, WhatsApp & Link */}
+                  <div className="settings-column">
+                    <section className="settings-group">
+                      <div className="settings-group-title">
+                        <Truck />
+                        <div>
+                          <h3>Getting there</h3>
+                          <p>Set the flat delivery rate for each area you serve.</p>
+                        </div>
+                      </div>
+                      {Object.entries(settings.delivery_zones).map(([zone, detail]) => (
+                        <div className="zone-row" key={zone}>
+                          <Input
+                            aria-label={`${zone} delivery area`}
+                            value={zone}
+                            onChange={(event) => {
+                              const nextZones = { ...settings.delivery_zones };
+                              const updated = nextZones[zone];
+                              delete nextZones[zone];
+                              if (updated) nextZones[event.target.value] = updated;
+                              setSettings({ ...settings, delivery_zones: nextZones });
+                            }}
+                          />
+                          <div className="zone-fee-input">
+                            <span>₦</span>
+                            <Input
+                              aria-label={`${zone} delivery fee`}
+                              inputMode="numeric"
+                              value={detail.fee}
+                              onChange={(event) =>
+                                setSettings({
+                                  ...settings,
+                                  delivery_zones: {
+                                    ...settings.delivery_zones,
+                                    [zone]: { fee: Number(event.target.value) || 0 },
+                                  },
+                                })
+                              }
+                            />
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              aria-label={`Remove ${zone}`}
+                              onClick={() => {
+                                const zones = { ...settings.delivery_zones };
+                                delete zones[zone];
+                                setSettings({ ...settings, delivery_zones: zones });
+                              }}
+                            >
+                              <X />
+                            </Button>
+                          </div>
+                        </div>
+                      ))}
+                      <div className="add-zone-fields">
+                        <Input
+                          aria-label="New delivery area"
+                          placeholder="Area name"
+                          value={newZone}
+                          onChange={(event) => setNewZone(event.target.value)}
+                        />
+                        <Input
+                          aria-label="New delivery fee"
+                          type="number"
+                          min="0"
+                          placeholder="Delivery fee in ₦"
+                          value={newZoneFee}
+                          onChange={(event) => setNewZoneFee(event.target.value)}
+                        />
+                        <Button variant="outline" aria-label="Add delivery area" onClick={addDeliveryZone}>
+                          <Plus />
+                        </Button>
+                      </div>
+                    </section>
+
+                    <section className="settings-group">
+                      <div className="settings-group-title">
+                        <ShoppingBag />
+                        <div>
+                          <h3>Say hello on WhatsApp</h3>
+                          <p>Order updates and questions go straight to you.</p>
+                        </div>
+                      </div>
+                      <label htmlFor="settings-whatsapp">WhatsApp number</label>
+                      <Input
+                        id="settings-whatsapp"
+                        type="tel"
+                        placeholder="080 1234 5678"
+                        value={settings.whatsapp_phone}
+                        onChange={(event) => setSettings({ ...settings, whatsapp_phone: event.target.value })}
+                      />
+                    </section>
+
+                    <section className="settings-group">
+                      <div className="settings-group-title">
+                        <Sparkles />
+                        <div>
+                          <h3>Your little shop link</h3>
+                          <p>Made for WhatsApp status, Instagram bio and messages.</p>
+                        </div>
+                      </div>
+                      <div className="share-link-box">
+                        <span>{storeLink.replace(/^https?:\/\//, "")}</span>
+                        <Button size="icon" variant="ghost" aria-label="Copy shop link" onClick={() => void copyStoreLink()}>
+                          <Copy />
+                        </Button>
+                      </div>
+                      <a className="text-link" href={storeLink} target="_blank" rel="noreferrer">
+                        Open your shop <ExternalLink />
+                      </a>
+                    </section>
+                  </div>
+                </div>
+              </>
+            )}
           </TabsContent>
         </Tabs>
       </div>
