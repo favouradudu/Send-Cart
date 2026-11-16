@@ -13,6 +13,7 @@ import {
   Instagram,
   LogOut,
   Package,
+  Palette,
   Plus,
   Search,
   Settings2,
@@ -258,6 +259,7 @@ export function VendorDashboard() {
           store_active: true,
           plan: "free" as const,
           order_credits: 0,
+          store_theme: "editorial",
         };
 
         const { data: created, error: createError } = await supabase
@@ -444,6 +446,7 @@ export function VendorDashboard() {
       bank_account: settings.bank_account.replace(/\D/g, ""),
       bank_account_name: settings.bank_account_name.trim(),
       delivery_zones: settings.delivery_zones,
+      store_theme: settings.store_theme || "editorial",
     }).eq("id", userId);
     if (error) {
       toast.error("We couldn’t save your shop settings.");
