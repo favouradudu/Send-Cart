@@ -257,7 +257,7 @@ export function Storefront({ storeSlug }: { storeSlug: string }) {
 
   return (
     <div
-      className="storefront min-h-screen bg-background text-foreground">
+      className="storefront min-h-screen bg-background text-foreground"
       data-theme={profile.store_theme || "editorial"}
     >
       <div className="announcement-bar">
