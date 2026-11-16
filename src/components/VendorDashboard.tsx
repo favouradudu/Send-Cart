@@ -603,16 +603,51 @@ export function VendorDashboard() {
                </div>
               <div className="form-span-two">
                 <div className="variant-field-header">
-                  <label htmlFor="product-variants">Options or variants <span>· Separate with commas</span></label>
+                  <label htmlFor="product-variants">
+                    Options or variants <span>· Separate with commas</span>
+                  </label>
                   <div className="variant-quick-chips">
                     <span className="chips-label">Quick fill:</span>
-                    <button type="button" className="quick-chip" onClick={() => setDraftProduct({ ...draftProduct, variants: "128GB, 256GB, 512GB" })}>📱 Storage</button>
-                    <button type="button" className="quick-chip" onClick={() => setDraftProduct({ ...draftProduct, variants: "3ml, 6ml, 12ml, 50ml" })}>🌸 Perfume</button>
-                    <button type="button" className="quick-chip" onClick={() => setDraftProduct({ ...draftProduct, variants: "S, M, L, XL" })}>👗 Fashion</button>
-                    <button type="button" className="quick-chip" onClick={() => setDraftProduct({ ...draftProduct, variants: "UK Used, Brand New" })}>📦 Condition</button>
+                    <button
+                      type="button"
+                      className="quick-chip"
+                      title="Add fashion size options"
+                      onClick={() => setDraftProduct({ ...draftProduct, variants: "S, M, L, XL" })}
+                    >
+                      + S, M, L, XL <span className="chip-category">(Fashion)</span>
+                    </button>
+                    <button
+                      type="button"
+                      className="quick-chip"
+                      title="Add storage options"
+                      onClick={() => setDraftProduct({ ...draftProduct, variants: "64GB, 128GB, 256GB" })}
+                    >
+                      + 64GB, 128GB, 256GB <span className="chip-category">(Gadgets)</span>
+                    </button>
+                    <button
+                      type="button"
+                      className="quick-chip"
+                      title="Add fragrance bottle sizes"
+                      onClick={() => setDraftProduct({ ...draftProduct, variants: "3ml, 6ml, 12ml" })}
+                    >
+                      + 3ml, 6ml, 12ml <span className="chip-category">(Perfumes)</span>
+                    </button>
+                    <button
+                      type="button"
+                      className="quick-chip"
+                      title="Add condition options"
+                      onClick={() => setDraftProduct({ ...draftProduct, variants: "UK Used, Brand New" })}
+                    >
+                      + UK Used, Brand New <span className="chip-category">(Electronics)</span>
+                    </button>
                   </div>
                 </div>
-                <Input id="product-variants" placeholder="e.g. 128GB, 256GB · or 3ml, 6ml · or S, M, L · or UK Used, Brand New" value={draftProduct.variants} onChange={(event) => setDraftProduct({ ...draftProduct, variants: event.target.value })} />
+                <Input
+                  id="product-variants"
+                  placeholder="e.g. S, M, L  ·  128GB, 256GB  ·  30ml, 50ml, 100ml  ·  UK Used, Brand New"
+                  value={draftProduct.variants}
+                  onChange={(event) => setDraftProduct({ ...draftProduct, variants: event.target.value })}
+                />
               </div>
               <div className="form-span-two"><label htmlFor="product-description">Product description</label><Textarea id="product-description" placeholder="Specifications, scent notes, condition, or size details" value={draftProduct.description} onChange={(event) => setDraftProduct({ ...draftProduct, description: event.target.value })} /></div>
             </div>
