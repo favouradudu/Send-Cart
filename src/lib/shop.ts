@@ -14,6 +14,8 @@ export type ShopProduct = {
   visible: boolean;
 };
 
+export type StoreTheme = "editorial" | "modern" | "bold";
+
 export type ShopProfile = {
   id: string;
   store_slug: string;
@@ -28,22 +30,23 @@ export type ShopProfile = {
   delivery_zones: Record<string, { fee: number }>;
   plan: "free" | "unlimited";
   order_credits: number;
+  store_theme?: StoreTheme;
 };
 
 export const DEMO_SLUG = "aura-threads";
-export const DEMO_VENDOR_PHONE = "2348012345678";
+export const DEMO_VENDOR_PHONE = "2348161323856";
 
 export const DEMO_PROFILE: ShopProfile = {
-  id: "demo-aura-threads",
+  id: "demo-send-cart",
   store_slug: DEMO_SLUG,
-  store_name: "Aura Threads",
-  bio: "Pieces that feel like you. Thoughtfully made in Lagos.",
+  store_name: "send cart",
+  bio: "products that feel like you. Thoughtfully made in Lagos.",
   avatar_url: "",
   whatsapp_phone: DEMO_VENDOR_PHONE,
-  instagram_handle: "aurathreads.ng",
+  instagram_handle: "sendcart.ng",
   bank_name: "Access Bank · demo",
   bank_account: "0000000000",
-  bank_account_name: "Aura Threads (demo)",
+  bank_account_name: "send cart (demo)",
   delivery_zones: {
     "Lagos Mainland": { fee: 2500 },
     "Lagos Island": { fee: 3500 },
@@ -51,6 +54,7 @@ export const DEMO_PROFILE: ShopProfile = {
   },
   plan: "free",
   order_credits: 0,
+  store_theme: "editorial",
 };
 
 export const DEMO_PRODUCTS: ShopProduct[] = [
