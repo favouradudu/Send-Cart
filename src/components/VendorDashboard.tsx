@@ -1041,27 +1041,11 @@ export function VendorDashboard() {
                 </SheetDescription>
               </SheetHeader>
               <div className="order-details-body" style={{ marginTop: "1.5rem", display: "flex", flexDirection: "column", gap: "1rem" }}>
+                <div className="order-details-body" style={{ marginTop: "1.5rem", display: "flex", flexDirection: "column", gap: "1rem" }}>
+                {/* 1. Customer Card */}
                 <div style={{ background: "var(--card, #fff)", padding: "1rem", borderRadius: "8px", border: "1px solid var(--border, #e5e5e5)" }}>
-                  <span style={{ fontSize: "0.8rem", textTransform: "uppercase", letterSpacing: "0.05em", color: "var(--muted-foreground)" }}>Delivery destination</span>
-                  <div style={{ fontWeight: 600 }}>{selectedOrder.delivery_zone}</div>
-                  {selectedOrder.delivery_address && (
-                    <div style={{ marginTop: "0.5rem", paddingTop: "0.5rem", borderTop: "1px dashed var(--border, #e5e5e5)" }}>
-                      <span style={{ fontSize: "0.75rem", textTransform: "uppercase", color: "var(--muted-foreground)", display: "block" }}>Street address & landmark</span>
-                      <div style={{ fontSize: "0.95rem", color: "var(--foreground)", marginTop: "2px" }}>
-                        {selectedOrder.delivery_address}
-                      </div>
-                    </div>
-                  )}
-                </div>
-                  {selectedOrder.delivery_address && (
-                    <div style={{ marginTop: "0.5rem", paddingTop: "0.5rem", borderTop: "1px dashed var(--border, #e5e5e5)" }}>
-                      <span style={{ fontSize: "0.75rem", textTransform: "uppercase", color: "var(--muted-foreground)", display: "block" }}>Street address & landmark</span>
-                      <div style={{ fontSize: "0.95rem", color: "var(--foreground)", marginTop: "2px" }}>
-                        {selectedOrder.delivery_address}
-                      </div>
-                    </div>
-                  )}
-                </div>
+                  <span style={{ fontSize: "0.8rem", textTransform: "uppercase", letterSpacing: "0.05em", color: "var(--muted-foreground)" }}>Customer</span>
+                  <div style={{ fontWeight: 600, fontSize: "1.1rem" }}>{selectedOrder.customer_name}</div>
                   <div style={{ color: "var(--muted-foreground)" }}>{selectedOrder.customer_phone}</div>
                   <div style={{ marginTop: "0.5rem" }}>
                     <a
@@ -1075,11 +1059,19 @@ export function VendorDashboard() {
                   </div>
                 </div>
 
+                {/* 2. Delivery Destination & Address Card */}
                 <div style={{ background: "var(--card, #fff)", padding: "1rem", borderRadius: "8px", border: "1px solid var(--border, #e5e5e5)" }}>
                   <span style={{ fontSize: "0.8rem", textTransform: "uppercase", letterSpacing: "0.05em", color: "var(--muted-foreground)" }}>Delivery destination</span>
                   <div style={{ fontWeight: 600 }}>{selectedOrder.delivery_zone}</div>
+                  {selectedOrder.delivery_address && (
+                    <div style={{ marginTop: "0.5rem", paddingTop: "0.5rem", borderTop: "1px dashed var(--border, #e5e5e5)" }}>
+                      <span style={{ fontSize: "0.75rem", textTransform: "uppercase", color: "var(--muted-foreground)", display: "block" }}>Street address & landmark</span>
+                      <div style={{ fontSize: "0.95rem", color: "var(--foreground)", marginTop: "2px" }}>
+                        {selectedOrder.delivery_address}
+                      </div>
+                    </div>
+                  )}
                 </div>
-
                 <div style={{ background: "var(--card, #fff)", padding: "1rem", borderRadius: "8px", border: "1px solid var(--border, #e5e5e5)" }}>
                   <span style={{ fontSize: "0.8rem", textTransform: "uppercase", letterSpacing: "0.05em", color: "var(--muted-foreground)" }}>Purchased items</span>
                   {loadingItems ? (
