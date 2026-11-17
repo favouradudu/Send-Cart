@@ -111,7 +111,6 @@ export const DEMO_PRODUCTS: ShopProduct[] = [
 ];
 
 export const DEMO_ORDERS: Array<{
-export const DEMO_ORDERS: Array<{
   order_number: string;
   customer_name: string;
   customer_phone: string;
