@@ -631,5 +631,25 @@ export function Storefront({ storeSlug }: { storeSlug: string }) {
               <strong>{deliveryFee === 0 ? `${formatNaira(subtotal)} (+ delivery)` : formatNaira(subtotal + deliveryFee)}</strong>
             </div>
           </div>
-         );
-       }
+          <p className="transfer-disclaimer">You’ll transfer directly to the seller. We never hold your money.</p>
+          <SheetFooter className="cart-sheet-footer">
+            <Button className="continue-checkout" onClick={() => void placeOrder()}>
+              Place order on WhatsApp <ArrowUpRight aria-hidden="true" />
+            </Button>
+          </SheetFooter>
+        </SheetContent>
+      </Sheet>
+      <div className="mobile-bottom-bar">
+        <Button variant="ghost" onClick={() => document.getElementById("collection")?.scrollIntoView({ behavior: "smooth" })}>
+          <Menu />Collection
+        </Button>
+        <Button variant="ghost" onClick={() => document.getElementById("our-note")?.scrollIntoView({ behavior: "smooth" })}>
+          <Sparkles />Our note
+        </Button>
+        <Button variant="ghost" onClick={() => { setOrder(null); setCartOpen(true); }}>
+          <ShoppingBag />Cart{itemCount ? ` · ${itemCount}` : ""}
+        </Button>
+      </div>
+    </div>
+  );
+}
