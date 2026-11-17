@@ -1104,3 +1104,101 @@
   margin-bottom: 2px;
 }
 
+/* ==========================================================================
+   Quick Stock Stepper & Sold Out Toggle
+   ========================================================================== */
+
+.product-stock-control {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 7px;
+  margin-top: 5px;
+}
+
+.stock-stepper {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid var(--border, #e2ded4);
+  background: var(--background, #fff);
+  border-radius: 4px;
+  overflow: hidden;
+  height: 24px;
+}
+
+.stock-step-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  background: none;
+  border: none;
+  color: var(--foreground);
+  cursor: pointer;
+  padding: 0;
+  transition: background 0.15s ease;
+}
+
+.stock-step-btn:hover:not(:disabled) {
+  background: var(--secondary, #f4f1ea);
+}
+
+.stock-step-btn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.stock-step-btn svg {
+  width: 12px;
+  height: 12px;
+}
+
+.stock-count {
+  font-size: 9.5px;
+  font-weight: 600;
+  padding: 0 6px;
+  color: var(--foreground);
+  white-space: nowrap;
+}
+
+.stock-count.is-zero {
+  color: #c2410c;
+  font-weight: 700;
+}
+
+.stock-soldout-btn {
+  background: none;
+  border: 1px solid var(--border, #e2ded4);
+  border-radius: 4px;
+  padding: 2px 7px;
+  height: 24px;
+  font-size: 8.5px;
+  font-weight: 600;
+  color: var(--muted-foreground);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.stock-soldout-btn:hover {
+  border-color: var(--foreground);
+  color: var(--foreground);
+}
+
+.stock-soldout-btn.is-soldout {
+  background: #fef2f2;
+  border-color: #fecaca;
+  color: #b91c1c;
+}
+
+.stock-soldout-btn.is-soldout:hover {
+  background: #f0fdf4;
+  border-color: #bbf7d0;
+  color: #15803d;
+}
+
+.product-variants-note {
+  color: var(--muted-foreground);
+  font-size: 9px;
+}
