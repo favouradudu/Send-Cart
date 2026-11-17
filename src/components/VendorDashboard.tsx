@@ -12,6 +12,7 @@ import {
   EyeOff,
   Instagram,
   LogOut,
+  Minus,
   Package,
   Palette,
   Plus,
@@ -430,6 +431,44 @@ export function VendorDashboard() {
     toast.success("Product removed.");
   };
 
+  const updateProductStock = async (product: ShopProduct, deltaOrSet: number | { set: number }) => {
+    if (!userId) return;
+    const currentStock = Number(product.stock) || 0;
+    const newStock =
+      typeof deltaOrSet === "number"
+        ? Math.max(0, currentStock + deltaOrSet)
+        : Math.max(0, deltaOrSet.set);
+
+    if (newStock === currentStock && typeof deltaOrSet === "number") return;
+
+    // 1. Optimistic UI update for instant feedback
+    setProducts((current) =>
+      current.map((item) => (item.id === product.id ? { ...item, stock: newStock } : item))
+    );
+
+    // 2. Persist to database
+    const { error } = await supabase
+      .from("products")
+      .update({ stock: newStock })
+      .eq("id", product.id)
+      .eq("vendor_id", userId);
+
+    if (error) {
+      // Revert on error
+      setProducts((current) =>
+        current.map((item) => (item.id === product.id ? { ...item, stock: currentStock } : item))
+      );
+      toast.error("Couldn't update stock. Please try again.");
+      return;
+    }
+
+    if (newStock === 0) {
+      toast.info(`${product.name} marked as Sold Out`);
+    } else {
+      toast.success(`${product.name} stock set to ${newStock}`);
+    }
+  };
+
   const saveSettings = async () => {
     if (!settings || !userId) return;
     if (!settings.store_name.trim() || !settings.whatsapp_phone.trim() || !/^\d{10}$/.test(settings.bank_account.replace(/\D/g, ""))) {
@@ -658,7 +697,55 @@ export function VendorDashboard() {
               <div className="form-span-two"><label htmlFor="product-description">Product description</label><Textarea id="product-description" placeholder="Specifications, scent notes, condition, or size details" value={draftProduct.description} onChange={(event) => setDraftProduct({ ...draftProduct, description: event.target.value })} /></div>
             </div>
             <div className="product-form-actions"><span><Upload /> Product photo uploads directly or via link.</span><Button disabled={busy} onClick={() => void saveProduct()}>{busy ? "Saving…" : editingProductId ? "Save changes" : "Add this product"} <Check /></Button></div></div>
-            <div className="vendor-product-list">{products.length ? products.map((product) => <article className={`vendor-product-row ${product.visible ? "" : "is-hidden"}`} key={product.id}><img src={product.image_url} alt="" width={68} height={82} /><div className="vendor-product-name"><span>{product.category}{product.visible ? "" : " · Hidden"}</span><h3>{product.name}</h3><small>{product.stock} in stock · {product.variants.join(", ") || "Standard"}</small></div><strong>{formatNaira(product.price)}</strong><Button variant="ghost" size="icon" aria-label={`Edit ${product.name}`} onClick={() => editProduct(product)}><Settings2 /></Button><Button variant="ghost" size="icon" aria-label={product.visible ? `Hide ${product.name}` : `Show ${product.name}`} onClick={() => void toggleProduct(product)}>{product.visible ? <EyeOff /> : <Eye />}</Button><Button variant="ghost" size="icon" aria-label={`Delete ${product.name}`} onClick={() => void deleteProduct(product)}><Trash2 /></Button></article>) : <div className="empty-dashboard-note">No products yet — add your first one above.</div>}</div>
+            <div className="vendor-product-list">{products.length ? products.map((product) => <article className={`vendor-product-row ${product.visible ? "" : "is-hidden"}`} key={product.id}><img src={product.image_url} alt="" width={68} height={82} />
+              <div className="vendor-product-name">
+               <span>{product.category}{product.visible ? "" : " · Hidden"}</span>
+               <h3>{product.name}</h3>
+  
+  {/* Quick 2-Tap Stock Sync */}
+  <div className="product-stock-control">
+    <div className="stock-stepper">
+      <button
+        type="button"
+        className="stock-step-btn"
+        aria-label={`Reduce stock for ${product.name}`}
+        disabled={product.stock <= 0}
+        onClick={() => void updateProductStock(product, -1)}
+      >
+        <Minus />
+      </button>
+      <span className={`stock-count ${product.stock === 0 ? "is-zero" : ""}`}>
+        {product.stock === 0 ? "Sold Out" : `${product.stock} in stock`}
+      </span>
+      <button
+        type="button"
+        className="stock-step-btn"
+        aria-label={`Increase stock for ${product.name}`}
+        onClick={() => void updateProductStock(product, 1)}
+      >
+        <Plus />
+      </button>
+    </div>
+
+    <button
+      type="button"
+      className={`stock-soldout-btn ${product.stock === 0 ? "is-soldout" : ""}`}
+      onClick={() =>
+        void updateProductStock(
+          product,
+          product.stock === 0 ? { set: 5 } : { set: 0 }
+        )
+      }
+    >
+      {product.stock === 0 ? "Restock (+5)" : "Mark Sold Out"}
+    </button>
+
+    <small className="product-variants-note">
+      · {product.variants.join(", ") || "Standard"}
+    </small>
+  </div>
+</div>
+              <strong>{formatNaira(product.price)}</strong><Button variant="ghost" size="icon" aria-label={`Edit ${product.name}`} onClick={() => editProduct(product)}><Settings2 /></Button><Button variant="ghost" size="icon" aria-label={product.visible ? `Hide ${product.name}` : `Show ${product.name}`} onClick={() => void toggleProduct(product)}>{product.visible ? <EyeOff /> : <Eye />}</Button><Button variant="ghost" size="icon" aria-label={`Delete ${product.name}`} onClick={() => void deleteProduct(product)}><Trash2 /></Button></article>) : <div className="empty-dashboard-note">No products yet — add your first one above.</div>}</div>
           </TabsContent>
           <TabsContent value="orders" className="dashboard-tab-content">
             <div className="dashboard-section-heading orders-page-heading"><div><p className="eyebrow">Every order, in one place</p><h2>On the way to something good.</h2></div><span className="orders-total">{orders.length} {orders.length === 1 ? "order" : "orders"}</span></div>
