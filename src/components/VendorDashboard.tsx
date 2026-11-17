@@ -224,7 +224,7 @@ export function VendorDashboard() {
       const [profileResult, catalogResult, orderResult] = await Promise.all([
         supabase.from("profiles").select("*").eq("id", userId).maybeSingle(),
         supabase.from("products").select("*").eq("vendor_id", userId).order("created_at", { ascending: false }),
-        supabase.from("orders").select("id, order_number, customer_name, customer_phone, delivery_zone, total, status, created_at").eq("vendor_id", userId).order("created_at", { ascending: false }).limit(200),
+        supabase.from("orders").select("id, order_number, customer_name, customer_phone, delivery_zone, delivery_address, total, status, created_at").eq("vendor_id", userId).order("created_at", { ascending: false }).limit(200),
       ]);
       if (!active) return;
       if (catalogResult.error) toast.error("We couldn’t load your products.");
