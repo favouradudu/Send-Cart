@@ -631,5 +631,5 @@ export function Storefront({ storeSlug }: { storeSlug: string }) {
               <strong>{deliveryFee === 0 ? `${formatNaira(subtotal)} (+ delivery)` : formatNaira(subtotal + deliveryFee)}</strong>
             </div>
           </div>
-  );
-}
+         );
+       }
