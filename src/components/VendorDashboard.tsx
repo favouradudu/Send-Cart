@@ -702,49 +702,49 @@ export function VendorDashboard() {
                <span>{product.category}{product.visible ? "" : " · Hidden"}</span>
                <h3>{product.name}</h3>
   
-  {/* Quick 2-Tap Stock Sync */}
-  <div className="product-stock-control">
-    <div className="stock-stepper">
-      <button
-        type="button"
-        className="stock-step-btn"
-        aria-label={`Reduce stock for ${product.name}`}
-        disabled={product.stock <= 0}
-        onClick={() => void updateProductStock(product, -1)}
-      >
-        <Minus />
-      </button>
-      <span className={`stock-count ${product.stock === 0 ? "is-zero" : ""}`}>
-        {product.stock === 0 ? "Sold Out" : `${product.stock} in stock`}
-      </span>
-      <button
-        type="button"
-        className="stock-step-btn"
-        aria-label={`Increase stock for ${product.name}`}
-        onClick={() => void updateProductStock(product, 1)}
-      >
-        <Plus />
-      </button>
-    </div>
+               {/* Quick 2-Tap Stock Sync */}
+               <div className="product-stock-control">
+                <div className="stock-stepper">
+                 <button
+                   type="button"
+                   className="stock-step-btn"
+                   aria-label={`Reduce stock for ${product.name}`}
+                   disabled={product.stock <= 0}
+                   onClick={() => void updateProductStock(product, -1)}
+                >
+                   <Minus />
+                </button>
+                <span className={`stock-count ${product.stock === 0 ? "is-zero" : ""}`}>
+                  {product.stock === 0 ? "Sold Out" : `${product.stock} in stock`}
+                </span>
+                <button
+                  type="button"
+                  className="stock-step-btn"
+                  aria-label={`Increase stock for ${product.name}`}
+                  onClick={() => void updateProductStock(product, 1)}
+                >
+                  <Plus />
+                </button>
+              </div>
 
-    <button
-      type="button"
-      className={`stock-soldout-btn ${product.stock === 0 ? "is-soldout" : ""}`}
-      onClick={() =>
-        void updateProductStock(
-          product,
-          product.stock === 0 ? { set: 5 } : { set: 0 }
-        )
-      }
-    >
-      {product.stock === 0 ? "Restock (+5)" : "Mark Sold Out"}
-    </button>
+              <button
+                type="button"
+                className={`stock-soldout-btn ${product.stock === 0 ? "is-soldout" : ""}`}
+                onClick={() =>
+                  void updateProductStock(
+                    product,
+                    product.stock === 0 ? { set: 5 } : { set: 0 }
+                  )
+                }
+              >
+                {product.stock === 0 ? "Restock (+5)" : "Mark Sold Out"}
+              </button>
 
-    <small className="product-variants-note">
-      · {product.variants.join(", ") || "Standard"}
-    </small>
-  </div>
-</div>
+              <small className="product-variants-note">
+                · {product.variants.join(", ") || "Standard"}
+              </small>
+            </div>
+          </div>
               <strong>{formatNaira(product.price)}</strong><Button variant="ghost" size="icon" aria-label={`Edit ${product.name}`} onClick={() => editProduct(product)}><Settings2 /></Button><Button variant="ghost" size="icon" aria-label={product.visible ? `Hide ${product.name}` : `Show ${product.name}`} onClick={() => void toggleProduct(product)}>{product.visible ? <EyeOff /> : <Eye />}</Button><Button variant="ghost" size="icon" aria-label={`Delete ${product.name}`} onClick={() => void deleteProduct(product)}><Trash2 /></Button></article>) : <div className="empty-dashboard-note">No products yet — add your first one above.</div>}</div>
           </TabsContent>
           <TabsContent value="orders" className="dashboard-tab-content">
