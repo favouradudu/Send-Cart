@@ -4,6 +4,7 @@ import {
   ArrowLeft,
   ArrowRight,
   ArrowUpRight,
+  Camera,
   Check,
   ChevronRight,
   CircleCheck,
@@ -23,6 +24,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Sheet,
   SheetContent,
@@ -48,6 +50,7 @@ type PlacedOrder = {
   customer_name: string;
   customer_phone: string;
   delivery_zone: string;
+  delivery_address?: string;
   delivery_fee: number;
   subtotal: number;
   total: number;
@@ -66,7 +69,8 @@ export function Storefront({ storeSlug }: { storeSlug: string }) {
   const [pickerVariant, setPickerVariant] = useState<string>("");
   const [customerName, setCustomerName] = useState("");
   const [customerPhone, setCustomerPhone] = useState("");
-  const [deliveryZone, setDeliveryZone] = useState("Lagos Mainland");
+  const [deliveryAddress, setDeliveryAddress] = useState("");
+  const [deliveryZone, setDeliveryZone] = useState(() => Object.keys(DEMO_PROFILE.delivery_zones)[0] ?? "Lagos Mainland");
   const [order, setOrder] = useState<PlacedOrder | null>(null);
   const [isLoading, setIsLoading] = useState(() => storeSlug !== DEMO_SLUG);
   const [accountCopied, setAccountCopied] = useState(false);
@@ -169,8 +173,8 @@ export function Storefront({ storeSlug }: { storeSlug: string }) {
   };
 
   const placeOrder = async () => {
-    if (!customerName.trim() || customerPhone.replace(/\D/g, "").length < 8 || cart.length === 0) {
-      toast.error("Add your name, a valid phone number and at least one item.");
+    if (!customerName.trim() || customerPhone.replace(/\D/g, "").length < 8 || !deliveryAddress.trim() || cart.length === 0) {
+      toast.error("Add your name, WhatsApp number, and street address with a landmark.");
       return;
     }
     let createdOrder: PlacedOrder;
@@ -180,6 +184,7 @@ export function Storefront({ storeSlug }: { storeSlug: string }) {
         customer_name: customerName.trim(),
         customer_phone: customerPhone.trim(),
         delivery_zone: deliveryZone,
+        delivery_address: deliveryAddress.trim(),
         delivery_fee: deliveryFee,
         subtotal,
         total: subtotal + deliveryFee,
@@ -192,11 +197,12 @@ export function Storefront({ storeSlug }: { storeSlug: string }) {
         }),
       );
     } else {
-      const { data, error } = await supabase.rpc("place_store_order", {
+      const { data, error } = await supabase.rpc("place_store_order" as any, {
         p_vendor_id: profile.id,
         p_customer_name: customerName.trim(),
         p_customer_phone: customerPhone.trim(),
         p_delivery_zone: deliveryZone,
+        p_delivery_address: deliveryAddress.trim(),
         p_items: cart.map((item) => ({
           product_id: item.product.id,
           quantity: item.quantity,
@@ -208,7 +214,7 @@ export function Storefront({ storeSlug }: { storeSlug: string }) {
         return;
       }
       const saved = data as unknown as Omit<PlacedOrder, "items">;
-      createdOrder = { ...saved, items: [...cart] };
+      createdOrder = { ...saved, delivery_address: deliveryAddress.trim(), items: [...cart] };
     }
 
     setOrder(createdOrder);
@@ -219,6 +225,7 @@ export function Storefront({ storeSlug }: { storeSlug: string }) {
       customerName: createdOrder.customer_name,
       customerPhone: createdOrder.customer_phone,
       deliveryZone: createdOrder.delivery_zone,
+      deliveryAddress: deliveryAddress.trim(),
       deliveryFee: createdOrder.delivery_fee,
       subtotal: createdOrder.subtotal,
       total: createdOrder.total,
@@ -475,6 +482,13 @@ export function Storefront({ storeSlug }: { storeSlug: string }) {
                 </div>
                 <div className="invoice-total"><span>Total to transfer</span><strong>{formatNaira(order.total)}</strong></div>
                 <div className="bank-details"><div><span>Direct bank transfer</span><strong>{order.customer_name ? profile.bank_name : ""}</strong></div><div><div><strong className="bank-number">{profile.bank_account}</strong><span>{profile.bank_account_name}</span></div>
+                <div className="payment-screenshot-notice">
+                  <Camera aria-hidden="true" />
+                  <div>
+                    <strong>Payment proof required:</strong>
+                    <span>Transfer to the account above and reply with your receipt/screenshot on WhatsApp to dispatch your order.</span>
+                  </div>
+                </div>
                   <Button variant="outline" size="icon" aria-label="Copy account number" onClick={() => void copyAccount()}>
                     {accountCopied ? <Check aria-hidden="true" /> : <Copy aria-hidden="true" />}
                   </Button></div><small>Please confirm these details with the seller on WhatsApp before transferring.</small></div>
@@ -555,17 +569,67 @@ export function Storefront({ storeSlug }: { storeSlug: string }) {
       <Sheet open={checkoutOpen} onOpenChange={setCheckoutOpen}>
         <SheetContent side="bottom" className="store-checkout-sheet">
           <SheetHeader className="cart-sheet-heading"><Button variant="ghost" size="icon" className="back-to-bag" aria-label="Back to cart" onClick={() => { setCheckoutOpen(false); setCartOpen(true); }}><ArrowLeft /></Button><p className="eyebrow">Nearly there</p><SheetTitle>Let’s get it to you.</SheetTitle><SheetDescription>We’ll confirm everything together on WhatsApp.</SheetDescription></SheetHeader>
-          <div className="checkout-form">
-            <label htmlFor="customer-name">Your name</label><Input id="customer-name" placeholder="How should we address you?" autoComplete="name" value={customerName} onChange={(event) => setCustomerName(event.target.value)} />
-            <label htmlFor="customer-phone">WhatsApp number</label><Input id="customer-phone" placeholder="081 6132 3856" type="tel" autoComplete="tel" value={customerPhone} onChange={(event) => setCustomerPhone(event.target.value)} />
-            <label htmlFor="delivery-zone">Where shall we send it?</label><select id="delivery-zone" className="delivery-select" value={deliveryZone} onChange={(event) => setDeliveryZone(event.target.value)}>{Object.keys(profile.delivery_zones).map((zone) => <option key={zone} value={zone}>{zone} · {formatNaira(profile.delivery_zones[zone]?.fee ?? 0)}</option>)}</select>
+           <div className="checkout-form">
+            <label htmlFor="customer-name">Your name</label>
+            <Input
+              id="customer-name"
+              placeholder="How should we address you?"
+              autoComplete="name"
+              value={customerName}
+              onChange={(event) => setCustomerName(event.target.value)}
+            />
+
+            <label htmlFor="customer-phone">WhatsApp number</label>
+            <Input
+              id="customer-phone"
+              placeholder="081 6132 3856"
+              type="tel"
+              autoComplete="tel"
+              value={customerPhone}
+              onChange={(event) => setCustomerPhone(event.target.value)}
+            />
+
+            <label htmlFor="delivery-zone">Delivery zone / destination</label>
+            <select
+              id="delivery-zone"
+              className="delivery-select"
+              value={deliveryZone}
+              onChange={(event) => setDeliveryZone(event.target.value)}
+            >
+              {Object.keys(profile.delivery_zones).map((zone) => {
+                const fee = profile.delivery_zones[zone]?.fee ?? 0;
+                return (
+                  <option key={zone} value={zone}>
+                    {zone} · {fee === 0 ? "Fee TBD / Pay on arrival" : formatNaira(fee)}
+                  </option>
+                );
+              })}
+            </select>
+
+            <label htmlFor="delivery-address">Street address & nearest landmark</label>
+            <Textarea
+              id="delivery-address"
+              placeholder="e.g. 14 Adeola Odeku St, beside Zenith Bank, Victoria Island"
+              autoComplete="street-address"
+              rows={2}
+              value={deliveryAddress}
+              onChange={(event) => setDeliveryAddress(event.target.value)}
+            />
           </div>
-          <div className="delivery-summary"><div><span>Items subtotal</span><strong>{formatNaira(subtotal)}</strong></div><div><span>Delivery · {deliveryZone}</span><strong>{formatNaira(deliveryFee)}</strong></div><div><span>Total</span><strong>{formatNaira(subtotal + deliveryFee)}</strong></div></div>
-          <p className="transfer-disclaimer">You’ll transfer directly to the seller. We never hold your money.</p>
-          <SheetFooter className="cart-sheet-footer"><Button className="continue-checkout" onClick={() => void placeOrder()}>Place order on WhatsApp <ArrowUpRight aria-hidden="true" /></Button></SheetFooter>
-        </SheetContent>
-      </Sheet>
-      <div className="mobile-bottom-bar"><Button variant="ghost" onClick={() => document.getElementById("collection")?.scrollIntoView({ behavior: "smooth" })}><Menu />Collection</Button><Button variant="ghost" onClick={() => document.getElementById("our-note")?.scrollIntoView({ behavior: "smooth" })}><Sparkles />Our note</Button><Button variant="ghost" onClick={() => { setOrder(null); setCartOpen(true); }}><ShoppingBag />Cart{itemCount ? ` · ${itemCount}` : ""}</Button></div>
-    </div>
+
+          <div className="delivery-summary">
+            <div>
+              <span>Items subtotal</span>
+              <strong>{formatNaira(subtotal)}</strong>
+            </div>
+            <div>
+              <span>Delivery · {deliveryZone}</span>
+              <strong>{deliveryFee === 0 ? "TBD / Pay on arrival" : formatNaira(deliveryFee)}</strong>
+            </div>
+            <div>
+              <span>Total</span>
+              <strong>{deliveryFee === 0 ? `${formatNaira(subtotal)} (+ delivery)` : formatNaira(subtotal + deliveryFee)}</strong>
+            </div>
+          </div>
   );
 }
