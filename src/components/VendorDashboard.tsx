@@ -903,6 +903,62 @@ export function VendorDashboard() {
                           </div>
                         </div>
                       ))}
+
+                      {/* One-tap Nigerian Delivery Presets */}
+                      <div className="variant-quick-chips" style={{ marginBottom: "0.75rem" }}>
+                        <span className="chips-label">Quick presets:</span>
+                        <button
+                          type="button"
+                          className="quick-chip"
+                          onClick={() => {
+                            setNewZone("Mainland Central (Ikeja, Yaba, Surulere)");
+                            setNewZoneFee("2500");
+                          }}
+                        >
+                          + Mainland Central · ₦2,500
+                        </button>
+                        <button
+                          type="button"
+                          className="quick-chip"
+                          onClick={() => {
+                            setNewZone("Mainland Outskirts (Ikorodu, Epe, Badagry)");
+                            setNewZoneFee("5000");
+                          }}
+                        >
+                          + Mainland Outskirts · ₦5,000
+                        </button>
+                        <button
+                          type="button"
+                          className="quick-chip"
+                          onClick={() => {
+                            setNewZone("Island Central (Ikoyi, VI, Lekki Phase 1)");
+                            setNewZoneFee("3500");
+                          }}
+                        >
+                          + Island Central · ₦3,500
+                        </button>
+                        <button
+                          type="button"
+                          className="quick-chip"
+                          onClick={() => {
+                            setNewZone("Park Waybill (Pay driver at park upon collection)");
+                            setNewZoneFee("0");
+                          }}
+                        >
+                          + Park Waybill · Pay at Park (₦0)
+                        </button>
+                        <button
+                          type="button"
+                          className="quick-chip"
+                          onClick={() => {
+                            setNewZone("Interstate Courier (Fee confirmed on WhatsApp)");
+                            setNewZoneFee("0");
+                          }}
+                        >
+                          + Interstate Courier · TBD (₦0)
+                        </button>
+                      </div>
+
                       <div className="add-zone-fields">
                         <Input
                           aria-label="New delivery area"
@@ -918,8 +974,12 @@ export function VendorDashboard() {
                           value={newZoneFee}
                           onChange={(event) => setNewZoneFee(event.target.value)}
                         />
-                        <Button variant="outline" aria-label="Add delivery area" onClick={addDeliveryZone}>
-                          <Plus />
+                        <Button
+                          variant="outline"
+                          aria-label="Add delivery area"
+                          onClick={addDeliveryZone}
+                        >
+                          <Plus /> Add area
                         </Button>
                       </div>
                     </section>
@@ -982,8 +1042,26 @@ export function VendorDashboard() {
               </SheetHeader>
               <div className="order-details-body" style={{ marginTop: "1.5rem", display: "flex", flexDirection: "column", gap: "1rem" }}>
                 <div style={{ background: "var(--card, #fff)", padding: "1rem", borderRadius: "8px", border: "1px solid var(--border, #e5e5e5)" }}>
-                  <span style={{ fontSize: "0.8rem", textTransform: "uppercase", letterSpacing: "0.05em", color: "var(--muted-foreground)" }}>Customer</span>
-                  <div style={{ fontWeight: 600, fontSize: "1.1rem" }}>{selectedOrder.customer_name}</div>
+                  <span style={{ fontSize: "0.8rem", textTransform: "uppercase", letterSpacing: "0.05em", color: "var(--muted-foreground)" }}>Delivery destination</span>
+                  <div style={{ fontWeight: 600 }}>{selectedOrder.delivery_zone}</div>
+                  {selectedOrder.delivery_address && (
+                    <div style={{ marginTop: "0.5rem", paddingTop: "0.5rem", borderTop: "1px dashed var(--border, #e5e5e5)" }}>
+                      <span style={{ fontSize: "0.75rem", textTransform: "uppercase", color: "var(--muted-foreground)", display: "block" }}>Street address & landmark</span>
+                      <div style={{ fontSize: "0.95rem", color: "var(--foreground)", marginTop: "2px" }}>
+                        {selectedOrder.delivery_address}
+                      </div>
+                    </div>
+                  )}
+                </div>
+                  {selectedOrder.delivery_address && (
+                    <div style={{ marginTop: "0.5rem", paddingTop: "0.5rem", borderTop: "1px dashed var(--border, #e5e5e5)" }}>
+                      <span style={{ fontSize: "0.75rem", textTransform: "uppercase", color: "var(--muted-foreground)", display: "block" }}>Street address & landmark</span>
+                      <div style={{ fontSize: "0.95rem", color: "var(--foreground)", marginTop: "2px" }}>
+                        {selectedOrder.delivery_address}
+                      </div>
+                    </div>
+                  )}
+                </div>
                   <div style={{ color: "var(--muted-foreground)" }}>{selectedOrder.customer_phone}</div>
                   <div style={{ marginTop: "0.5rem" }}>
                     <a
