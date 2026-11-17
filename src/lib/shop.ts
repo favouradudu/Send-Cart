@@ -48,9 +48,11 @@ export const DEMO_PROFILE: ShopProfile = {
   bank_account: "0000000000",
   bank_account_name: "send cart (demo)",
   delivery_zones: {
-    "Lagos Mainland": { fee: 2500 },
-    "Lagos Island": { fee: 3500 },
-    "Outside Lagos": { fee: 6000 },
+    "Mainland Central (Ikeja, Yaba, Surulere)": { fee: 2500 },
+    "Mainland Outskirts (Ikorodu, Epe, Badagry)": { fee: 5000 },
+    "Island Central (Ikoyi, VI, Lekki Phase 1)": { fee: 3500 },
+    "Park Waybill (Pay driver at park upon collection)": { fee: 0 },
+    "Interstate Courier (Fee confirmed on WhatsApp)": { fee: 0 },
   },
   plan: "free",
   order_credits: 0,
@@ -109,10 +111,12 @@ export const DEMO_PRODUCTS: ShopProduct[] = [
 ];
 
 export const DEMO_ORDERS: Array<{
+export const DEMO_ORDERS: Array<{
   order_number: string;
   customer_name: string;
   customer_phone: string;
   delivery_zone: string;
+  delivery_address?: string;
   total: number;
   status: "pending_confirmation" | "paid" | "dispatched" | "delivered";
   created_at: string;
@@ -121,7 +125,8 @@ export const DEMO_ORDERS: Array<{
     order_number: "AT-7C31A9D2",
     customer_name: "Amaka Okafor",
     customer_phone: "0803 555 0192",
-    delivery_zone: "Lagos Mainland",
+    delivery_zone: "Mainland Central (Ikeja, Yaba, Surulere)",
+    delivery_address: "18 Adeniyi Jones Ave, near Ikeja Under-Bridge, Ikeja",
     total: 51000,
     status: "pending_confirmation",
     created_at: "2026-11-13T10:40:00.000Z",
@@ -130,7 +135,8 @@ export const DEMO_ORDERS: Array<{
     order_number: "AT-4B86D108",
     customer_name: "Teni Adeyemi",
     customer_phone: "0812 444 6789",
-    delivery_zone: "Lagos Island",
+    delivery_zone: "Island Central (Ikoyi, VI, Lekki Phase 1)",
+    delivery_address: "Flat 4, Block B, 14 Adeola Odeku St, beside Zenith Bank, Victoria Island",
     total: 66500,
     status: "paid",
     created_at: "2026-11-12T14:20:00.000Z",
@@ -154,6 +160,7 @@ export function buildWhatsAppOrderMessage(input: {
   customerName: string;
   customerPhone: string;
   deliveryZone: string;
+  deliveryAddress?: string;
   items: Array<{ name: string; quantity: number; unitPrice: number; variant: string }>;
   subtotal: number;
   deliveryFee: number;
@@ -165,24 +172,39 @@ export function buildWhatsAppOrderMessage(input: {
   const lines = input.items.map(
     (item) => `• ${item.name}${item.variant ? ` (${item.variant})` : ""} × ${item.quantity} — ${formatNaira(item.quantity * item.unitPrice)}`,
   );
+
+  const deliveryFeeDisplay =
+    input.deliveryFee === 0
+      ? "Fee TBD on WhatsApp / Pay on arrival"
+      : formatNaira(input.deliveryFee);
+
+  const totalDisplay =
+    input.deliveryFee === 0
+      ? `${formatNaira(input.subtotal)} (+ delivery fee)`
+      : formatNaira(input.total);
+
   return [
     `Hello ${DEMO_PROFILE.store_name}! I'd like to place an order.`,
     `Order: ${input.orderNumber}`,
     "",
     `Name: ${input.customerName}`,
     `Phone: ${input.customerPhone}`,
-    `Delivery: ${input.deliveryZone}`,
+    `Delivery Zone: ${input.deliveryZone}`,
+    input.deliveryAddress ? `Address & Landmark: ${input.deliveryAddress}` : null,
     "",
     "Items:",
     ...lines,
     "",
     `Subtotal: ${formatNaira(input.subtotal)}`,
-    `Delivery: ${formatNaira(input.deliveryFee)}`,
-    `Total: ${formatNaira(input.total)}`,
+    `Delivery: ${deliveryFeeDisplay}`,
+    `Total: ${totalDisplay}`,
     "",
     "Bank transfer details:",
     `${input.bankName} · ${input.bankAccount}`,
     input.bankAccountName,
-    "Please confirm availability and payment details. Thank you!",
-  ].join("\n");
+    "",
+    "📸 Please reply to this message with your payment screenshot/receipt to confirm dispatch.",
+  ]
+    .filter((line) => line !== null)
+    .join("\n");
 }
