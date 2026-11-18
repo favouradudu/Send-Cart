@@ -18,6 +18,7 @@ export type StoreTheme = "editorial" | "modern" | "bold";
 
 export type ShopProfile = {
   id: string;
+  vendor_code?: string;
   store_slug: string;
   store_name: string;
   bio: string;
@@ -38,6 +39,7 @@ export const DEMO_VENDOR_PHONE = "2348161323856";
 
 export const DEMO_PROFILE: ShopProfile = {
   id: "demo-send-cart",
+  vendor_code: "SC-VND-00101",
   store_slug: DEMO_SLUG,
   store_name: "send cart",
   bio: "products that feel like you. Thoughtfully made in Lagos.",
@@ -121,16 +123,33 @@ export const DEMO_ORDERS: Array<{
   created_at: string;
 }> = [
   {
-    order_number: "AT-7C31A9D2",
-    customer_name: "Amaka Okafor",
-    customer_phone: "0803 555 0192",
-    delivery_zone: "Mainland Central (Ikeja, Yaba, Surulere)",
-    delivery_address: "18 Adeniyi Jones Ave, near Ikeja Under-Bridge, Ikeja",
-    total: 51000,
+    export const DEMO_ORDERS = [
+  {
+    id: "demo-ord-1",
+    order_number: "SC-ORD-7C31A9D2",
+    customer_name: "Amaka Eze",
+    customer_phone: "+234 802 334 1120",
+    delivery_zone: "Island Central (Ikoyi, VI, Lekki Phase 1)",
+    delivery_address: "14 Adeola Odeku, Victoria Island, Lagos",
+    delivery_fee: 3500,
+    total: 80500,
     status: "pending_confirmation",
-    created_at: "2026-11-13T10:40:00.000Z",
+    created_at: new Date(Date.now() - 1000 * 60 * 35).toISOString(),
   },
   {
+    id: "demo-ord-2",
+    order_number: "SC-ORD-4B86D108",
+    customer_name: "Tunde Bakare",
+    customer_phone: "+234 816 889 0041",
+    delivery_zone: "Mainland Central (Ikeja, Yaba, Surulere)",
+    delivery_address: "5 Toyin Street, Ikeja, Lagos",
+    delivery_fee: 2500,
+    total: 34500,
+    status: "paid",
+    created_at: new Date(Date.now() - 1000 * 60 * 180).toISOString(),
+  },
+] as const;
+  }
     order_number: "AT-4B86D108",
     customer_name: "Teni Adeyemi",
     customer_phone: "0812 444 6789",
