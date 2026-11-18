@@ -37,6 +37,21 @@ export type ShopProfile = {
 export const DEMO_SLUG = "aura-threads";
 export const DEMO_VENDOR_PHONE = "2348161323856";
 
+export function getDeliveryFeeLabel(zoneName: string, fee: number): string {
+  if (fee > 0) return formatNaira(fee);
+  const lower = zoneName.toLowerCase();
+  if (lower.includes("park") || lower.includes("waybill")) {
+    return "₦0 (Pay driver at park upon collection)";
+  }
+  if (lower.includes("rider") || lower.includes("arrival") || lower.includes("doorstep") || lower.includes("dispatch")) {
+    return "₦0 (Pay rider on arrival)";
+  }
+  if (lower.includes("whatsapp") || lower.includes("confirm") || lower.includes("dynamic") || lower.includes("courier")) {
+    return "Fee calculated on WhatsApp (based on landmark)";
+  }
+  return "₦0 (Pay rider on arrival)";
+}
+
 export const DEMO_PROFILE: ShopProfile = {
   id: "demo-send-cart",
   vendor_code: "SC-VND-00101",
@@ -50,11 +65,11 @@ export const DEMO_PROFILE: ShopProfile = {
   bank_account: "0000000000",
   bank_account_name: "send cart (demo)",
   delivery_zones: {
+    "Dispatch Rider (Pay rider directly on delivery)": { fee: 0 },
+    "Motor Park Waybill (Pay driver at park upon collection)": { fee: 0 },
+    "Interstate / Doorstep Courier (Fee confirmed on WhatsApp)": { fee: 0 },
     "Mainland Central (Ikeja, Yaba, Surulere)": { fee: 2500 },
-    "Mainland Outskirts (Ikorodu, Epe, Badagry)": { fee: 5000 },
     "Island Central (Ikoyi, VI, Lekki Phase 1)": { fee: 3500 },
-    "Park Waybill (Pay driver at park upon collection)": { fee: 0 },
-    "Interstate Courier (Fee confirmed on WhatsApp)": { fee: 0 },
   },
   plan: "free",
   order_credits: 0,
@@ -180,15 +195,12 @@ export function buildWhatsAppOrderMessage(input: {
     (item) => `• ${item.name}${item.variant ? ` (${item.variant})` : ""} × ${item.quantity} — ${formatNaira(item.quantity * item.unitPrice)}`,
   );
 
-  const deliveryFeeDisplay =
-    input.deliveryFee === 0
-      ? "Fee TBD on WhatsApp / Pay on arrival"
-      : formatNaira(input.deliveryFee);
+  const isZeroFee = input.deliveryFee === 0;
+  const deliveryFeeDisplay = getDeliveryFeeLabel(input.deliveryZone, input.deliveryFee);
 
-  const totalDisplay =
-    input.deliveryFee === 0
-      ? `${formatNaira(input.subtotal)} (+ delivery fee)`
-      : formatNaira(input.total);
+  const totalDisplay = isZeroFee
+    ? `${formatNaira(input.subtotal)} (+ delivery settled separately)`
+    : formatNaira(input.total);
 
   return [
     `Hello ${DEMO_PROFILE.store_name}! I'd like to place an order.`,
@@ -196,7 +208,7 @@ export function buildWhatsAppOrderMessage(input: {
     "",
     `Name: ${input.customerName}`,
     `Phone: ${input.customerPhone}`,
-    `Delivery Zone: ${input.deliveryZone}`,
+    `Delivery Option: ${input.deliveryZone}`,
     input.deliveryAddress ? `Address & Landmark: ${input.deliveryAddress}` : null,
     "",
     "Items:",
@@ -204,7 +216,7 @@ export function buildWhatsAppOrderMessage(input: {
     "",
     `Subtotal: ${formatNaira(input.subtotal)}`,
     `Delivery: ${deliveryFeeDisplay}`,
-    `Total: ${totalDisplay}`,
+    isZeroFee ? `Total to transfer for items: ${formatNaira(input.subtotal)}` : `Total: ${totalDisplay}`,
     "",
     "Bank transfer details:",
     `${input.bankName} · ${input.bankAccount}`,
