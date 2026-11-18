@@ -113,11 +113,13 @@ export const DEMO_PRODUCTS: ShopProduct[] = [
 ];
 
 export const DEMO_ORDERS: Array<{
+  id?: string;
   order_number: string;
   customer_name: string;
   customer_phone: string;
   delivery_zone: string;
   delivery_address?: string;
+  delivery_fee?: number;
   total: number;
   status: "pending_confirmation" | "paid" | "dispatched" | "delivered";
   created_at: string;
@@ -146,8 +148,8 @@ export const DEMO_ORDERS: Array<{
     status: "paid",
     created_at: new Date(Date.now() - 1000 * 60 * 180).toISOString(),
   },
-] as const;
-  }
+];
+
     order_number: "AT-4B86D108",
     customer_name: "Teni Adeyemi",
     customer_phone: "0812 444 6789",
