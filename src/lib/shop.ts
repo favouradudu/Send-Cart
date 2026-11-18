@@ -150,17 +150,6 @@ export const DEMO_ORDERS: Array<{
   },
 ];
 
-    order_number: "AT-4B86D108",
-    customer_name: "Teni Adeyemi",
-    customer_phone: "0812 444 6789",
-    delivery_zone: "Island Central (Ikoyi, VI, Lekki Phase 1)",
-    delivery_address: "Flat 4, Block B, 14 Adeola Odeku St, beside Zenith Bank, Victoria Island",
-    total: 66500,
-    status: "paid",
-    created_at: "2026-11-12T14:20:00.000Z",
-  },
-];
-
 export const formatNaira = (amount: number) =>
   `₦${new Intl.NumberFormat("en-NG", { maximumFractionDigits: 0 }).format(amount)}`;
 
