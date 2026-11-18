@@ -1048,8 +1048,38 @@ export function VendorDashboard() {
                       ))}
 
                       {/* One-tap Nigerian Delivery Presets */}
-                      <div className="variant-quick-chips" style={{ marginBottom: "0.75rem" }}>
-                        <span className="chips-label">Quick presets:</span>
+                      <div className="variant-quick-chips" style={{ marginBottom: "12px" }}>
+                        <span className="chips-label">Quick add options:</span>
+                        <button
+                          type="button"
+                          className="quick-chip"
+                          onClick={() => {
+                            setNewZone("Dispatch Rider (Pay rider directly on delivery)");
+                            setNewZoneFee("0");
+                          }}
+                        >
+                          + Pay Rider on Arrival (₦0)
+                        </button>
+                        <button
+                          type="button"
+                          className="quick-chip"
+                          onClick={() => {
+                            setNewZone("Motor Park Waybill (Pay driver at park upon collection)");
+                            setNewZoneFee("0");
+                          }}
+                        >
+                          + Park Waybill · Pay at Park (₦0)
+                        </button>
+                        <button
+                          type="button"
+                          className="quick-chip"
+                          onClick={() => {
+                            setNewZone("Interstate / Doorstep Courier (Fee confirmed on WhatsApp)");
+                            setNewZoneFee("0");
+                          }}
+                        >
+                          + Confirm on WhatsApp (₦0)
+                        </button>
                         <button
                           type="button"
                           className="quick-chip"
@@ -1064,22 +1094,13 @@ export function VendorDashboard() {
                           type="button"
                           className="quick-chip"
                           onClick={() => {
-                            setNewZone("Mainland Outskirts (Ikorodu, Epe, Badagry)");
-                            setNewZoneFee("5000");
-                          }}
-                        >
-                          + Mainland Outskirts · ₦5,000
-                        </button>
-                        <button
-                          type="button"
-                          className="quick-chip"
-                          onClick={() => {
                             setNewZone("Island Central (Ikoyi, VI, Lekki Phase 1)");
                             setNewZoneFee("3500");
                           }}
                         >
                           + Island Central · ₦3,500
                         </button>
+                      </div>
                         <button
                           type="button"
                           className="quick-chip"
