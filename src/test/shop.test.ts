@@ -18,7 +18,7 @@ describe("Nigerian shop order rules", () => {
 
   it("puts the customer, delivery, itemised total, and bank details into the WhatsApp message", () => {
     const message = buildWhatsAppOrderMessage({
-      orderNumber: "AT-1234ABCD",
+      orderNumber: "SC-ORD-1234ABCD",
       customerName: "Ada",
       customerPhone: "08012345678",
       deliveryZone: "Lagos Mainland",
@@ -31,7 +31,7 @@ describe("Nigerian shop order rules", () => {
       bankAccountName: "Aura Threads",
     });
 
-    expect(message).toContain("AT-1234ABCD");
+    expect(message).toContain("SC-ORD-1234ABCD");
     expect(message).toContain("Ada");
     expect(message).toContain("Lagos Mainland");
     expect(message).toContain("Linen Set (M) × 1 — ₦48,500");
