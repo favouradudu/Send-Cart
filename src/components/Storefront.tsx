@@ -180,7 +180,7 @@ export function Storefront({ storeSlug }: { storeSlug: string }) {
     let createdOrder: PlacedOrder;
     if (isDemo) {
       createdOrder = {
-        order_number: `AT-${crypto.randomUUID().replaceAll("-", "").slice(0, 8).toUpperCase()}`,
+        order_number: `SC-ORD-${crypto.randomUUID().replaceAll("-", "").slice(0, 8).toUpperCase()}`,
         customer_name: customerName.trim(),
         customer_phone: customerPhone.trim(),
         delivery_zone: deliveryZone,
