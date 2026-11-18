@@ -1202,3 +1202,75 @@
   color: var(--muted-foreground);
   font-size: 9px;
 }
+
+/* Merchant Identity and Tracking Badges */
+.dashboard-merchant-tag {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-bottom: 0.25rem;
+}
+
+.merchant-id-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 11px;
+  font-weight: 500;
+  padding: 2px 8px;
+  border-radius: 9999px;
+  background-color: var(--secondary, #f0ede6);
+  color: var(--foreground, #2d2d2d);
+  border: 1px solid var(--border, #e5e0d8);
+  letter-spacing: 0.02em;
+}
+
+.merchant-id-pill strong {
+  font-weight: 700;
+  color: var(--primary, #1a1a1a);
+}
+
+.settings-merchant-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+  padding: 1rem 1.25rem;
+  background: var(--card, #ffffff);
+  border: 1px solid var(--border, #e5e0d8);
+  border-radius: 0.75rem;
+  margin-bottom: 0.5rem;
+}
+
+.merchant-id-display {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.merchant-id-display code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 14px;
+  font-weight: 700;
+  padding: 6px 12px;
+  background: var(--secondary, #f5f3ee);
+  border: 1px solid var(--border, #e5e0d8);
+  border-radius: 6px;
+  color: var(--foreground, #2d2d2d);
+}
+
+.merchant-status-badge {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 4px 8px;
+  border-radius: 9999px;
+  background: #ecfdf5;
+  color: #065f46;
+  border: 1px solid #a7f3d0;
+}
+
