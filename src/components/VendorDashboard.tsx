@@ -819,6 +819,33 @@ export function VendorDashboard() {
 
                 <div className="settings-columns">
                   {/* === Store Vibe & Aesthetics Preset Selector === */}
+                <div className="settings-columns">
+                  {/* === Official Merchant Identity Card === */}
+                  <div className="settings-merchant-card">
+                    <div>
+                      <p className="eyebrow">Legal Merchant Anchor</p>
+                      <h3>Official Merchant ID</h3>
+                      <p className="settings-section-desc">
+                        Your permanent SendCart registration ID. Anchors your dispute protection, transaction receipts, and WhatsApp vendor support.
+                      </p>
+                    </div>
+                    <div className="merchant-id-display">
+                      <code
+                        title="Tap to copy Merchant ID"
+                        style={{ cursor: "pointer" }}
+                        onClick={() => {
+                          const code = profile.vendor_code || "SC-VND-00101";
+                          void navigator.clipboard.writeText(code);
+                          toast.success(`Copied Merchant ID: ${code}`);
+                        }}
+                      >
+                        {profile.vendor_code || "SC-VND-00101"}
+                      </code>
+                      <span className="merchant-status-badge">Registered Vendor</span>
+                    </div>
+                  </div>
+
+                  {/* === Store Vibe & Aesthetics Preset Selector === */}
                   <section className="settings-group theme-setting-group">
                     <div className="settings-group-title">
                       <Palette />
