@@ -818,8 +818,6 @@ export function VendorDashboard() {
                 </div>
 
                 <div className="settings-columns">
-                  {/* === Store Vibe & Aesthetics Preset Selector === */}
-                <div className="settings-columns">
                   {/* === Official Merchant Identity Card === */}
                   <div className="settings-merchant-card">
                     <div>
