@@ -169,23 +169,43 @@ export function VendorDashboard() {
     if (!userId || !profile || !upgradeTier) return;
     setUpgradeBusy(true);
     try {
+      const now = new Date();
+      const yearMonth = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, "0")}`;
+      const randomSuffix = Math.floor(1000 + Math.random() * 9000);
+      const txnReference = `SC-TXN-${yearMonth}-${randomSuffix}`;
+      const amount = upgradeTier === "credits" ? 500 : 2000;
+      const planType = upgradeTier === "credits" ? "credits_50" : "unlimited_monthly";
+
+      // 1. Record in legal platform_transactions ledger
+      await supabase.from("platform_transactions" as any).insert({
+        vendor_id: userId,
+        reference: txnReference,
+        amount,
+        currency: "NGN",
+        plan_type: planType,
+        payment_channel: "direct_upgrade",
+        status: "completed",
+        notes: upgradeTier === "credits" ? "50 Extra Order Credits Top-Up" : "Unlimited Monthly Plan Upgrade",
+      });
+
+      // 2. Update vendor profile status
       if (upgradeTier === "credits") {
         const nextCredits = (profile.order_credits ?? 0) + 50;
         const { error } = await supabase
           .from("profiles")
-          .update({ order_credits: nextCredits })
+          .update({ order_credits: nextCredits } as any)
           .eq("id", userId);
         if (error) throw error;
         setProfile({ ...profile, order_credits: nextCredits });
-        toast.success("Added 50 order credits to your shop!");
+        toast.success(`Added 50 order credits! (Receipt: ${txnReference})`);
       } else if (upgradeTier === "unlimited") {
         const { error } = await supabase
           .from("profiles")
-          .update({ plan: "unlimited" })
+          .update({ plan: "unlimited" } as any)
           .eq("id", userId);
         if (error) throw error;
         setProfile({ ...profile, plan: "unlimited" });
-        toast.success("Your shop is now on the Unlimited plan!");
+        toast.success(`Upgraded to Unlimited plan! (Receipt: ${txnReference})`);
       }
       setUpgradeTier(null);
     } catch (err: unknown) {
@@ -568,7 +588,18 @@ export function VendorDashboard() {
         <div className="dashboard-top-actions"><Button asChild variant="outline"><a href={storeLink} target="_blank" rel="noreferrer"><ExternalLink /> View my shop</a></Button><Button variant="ghost" size="icon" aria-label="Sign out" onClick={() => void signOut()}><LogOut /></Button></div>
       </header>
       <section className="dashboard-welcome">
-        <div><p className="eyebrow"><span /> YOUR LITTLE CORNER OF THE INTERNET</p><h1>Good morning, <em>{profile.store_name}.</em></h1><p className="dashboard-welcome-note">Here’s what’s happening with your shop.</p></div>
+        <div>
+          <div className="dashboard-merchant-tag">
+            <span className="eyebrow"><span /> YOUR LITTLE CORNER OF THE INTERNET</span>
+            {profile.vendor_code && (
+              <span className="merchant-id-pill" title="Permanent SendCart Merchant ID">
+                Merchant ID: <strong>{profile.vendor_code}</strong>
+              </span>
+            )}
+          </div>
+          <h1>Good morning, <em>{profile.store_name}.</em></h1>
+          <p className="dashboard-welcome-note">Here’s what’s happening with your shop.</p>
+        </div>
         <Button className="share-shop-button" onClick={() => void copyStoreLink()}><Copy /> Copy shop link <ArrowUpRight /></Button>
       </section>
       <div className="dashboard-tabs-wrap">
