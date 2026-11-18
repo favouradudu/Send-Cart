@@ -123,8 +123,6 @@ export const DEMO_ORDERS: Array<{
   created_at: string;
 }> = [
   {
-    export const DEMO_ORDERS = [
-  {
     id: "demo-ord-1",
     order_number: "SC-ORD-7C31A9D2",
     customer_name: "Amaka Eze",
