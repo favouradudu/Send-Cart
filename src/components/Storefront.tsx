@@ -40,6 +40,7 @@ import {
   DEMO_VENDOR_PHONE,
   buildWhatsAppOrderMessage,
   formatNaira,
+  getDeliveryFeeLabel,
   type ShopProduct,
   type ShopProfile,
 } from "@/lib/shop";
@@ -478,9 +479,15 @@ export function Storefront({ storeSlug }: { storeSlug: string }) {
                 <div className="invoice-order-ref"><span>Order reference</span><strong>{order.order_number}</strong></div>
                 <div className="invoice-lines">
                   {order.items.map((line) => <div key={`${line.product.id}-${line.variant}`}><span>{line.product.name} <small>· {line.variant} × {line.quantity}</small></span><strong>{formatNaira(line.product.price * line.quantity)}</strong></div>)}
-                  <div><span>Delivery · {order.delivery_zone}</span><strong>{formatNaira(order.delivery_fee)}</strong></div>
+                  <div>
+                    <span>Delivery · {order.delivery_zone}</span>
+                    <strong>{getDeliveryFeeLabel(order.delivery_zone, order.delivery_fee)}</strong>
+                  </div>
                 </div>
-                <div className="invoice-total"><span>Total to transfer</span><strong>{formatNaira(order.total)}</strong></div>
+                <div className="invoice-total">
+                  <span>{order.delivery_fee === 0 ? "Total to transfer for items" : "Total to transfer"}</span>
+                  <strong>{formatNaira(order.delivery_fee === 0 ? order.subtotal : order.total)}</strong>
+                </div>
                 <div className="bank-details"><div><span>Direct bank transfer</span><strong>{order.customer_name ? profile.bank_name : ""}</strong></div><div><div><strong className="bank-number">{profile.bank_account}</strong><span>{profile.bank_account_name}</span></div>
                 <div className="payment-screenshot-notice">
                   <Camera aria-hidden="true" />
@@ -589,7 +596,7 @@ export function Storefront({ storeSlug }: { storeSlug: string }) {
               onChange={(event) => setCustomerPhone(event.target.value)}
             />
 
-            <label htmlFor="delivery-zone">Delivery zone / destination</label>
+            <label htmlFor="delivery-zone">Delivery option / destination</label>
             <select
               id="delivery-zone"
               className="delivery-select"
@@ -600,7 +607,7 @@ export function Storefront({ storeSlug }: { storeSlug: string }) {
                 const fee = profile.delivery_zones[zone]?.fee ?? 0;
                 return (
                   <option key={zone} value={zone}>
-                    {zone} · {fee === 0 ? "Fee TBD / Pay on arrival" : formatNaira(fee)}
+                    {zone} · {getDeliveryFeeLabel(zone, fee)}
                   </option>
                 );
               })}
@@ -624,12 +631,21 @@ export function Storefront({ storeSlug }: { storeSlug: string }) {
             </div>
             <div>
               <span>Delivery · {deliveryZone}</span>
-              <strong>{deliveryFee === 0 ? "TBD / Pay on arrival" : formatNaira(deliveryFee)}</strong>
+              <strong>{getDeliveryFeeLabel(deliveryZone, deliveryFee)}</strong>
             </div>
             <div>
-              <span>Total</span>
-              <strong>{deliveryFee === 0 ? `${formatNaira(subtotal)} (+ delivery)` : formatNaira(subtotal + deliveryFee)}</strong>
+              <span>Total to transfer</span>
+              <strong>{deliveryFee === 0 ? formatNaira(subtotal) : formatNaira(subtotal + deliveryFee)}</strong>
             </div>
+            {deliveryFee === 0 && (
+              <p className="delivery-policy-hint">
+                {deliveryZone.toLowerCase().includes("park")
+                  ? "📦 Pay the driver or loader directly when picking up your package at the motor park."
+                  : deliveryZone.toLowerCase().includes("whatsapp") || deliveryZone.toLowerCase().includes("courier")
+                  ? "💬 Dispatch fee will be calculated on WhatsApp based on your exact landmark."
+                  : "🛵 Transfer the product cost now, and pay the dispatch rider directly at your doorstep."}
+              </p>
+            )}
           </div>
           <p className="transfer-disclaimer">You’ll transfer directly to the seller. We never hold your money.</p>
           <SheetFooter className="cart-sheet-footer">
