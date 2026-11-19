@@ -1101,28 +1101,7 @@ export function VendorDashboard() {
                           + Island Central · ₦3,500
                         </button>
                       </div>
-                        <button
-                          type="button"
-                          className="quick-chip"
-                          onClick={() => {
-                            setNewZone("Park Waybill (Pay driver at park upon collection)");
-                            setNewZoneFee("0");
-                          }}
-                        >
-                          + Park Waybill · Pay at Park (₦0)
-                        </button>
-                        <button
-                          type="button"
-                          className="quick-chip"
-                          onClick={() => {
-                            setNewZone("Interstate Courier (Fee confirmed on WhatsApp)");
-                            setNewZoneFee("0");
-                          }}
-                        >
-                          + Interstate Courier · TBD (₦0)
-                        </button>
-                      </div>
-
+                        
                       <div className="add-zone-fields">
                         <Input
                           aria-label="New delivery area"
