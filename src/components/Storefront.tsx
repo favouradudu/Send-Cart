@@ -297,16 +297,32 @@ export function Storefront({ storeSlug }: { storeSlug: string }) {
               <span>{profile.store_name}<span className="verified-marker" title="Seller verified"><ShieldCheck /></span></span>
               <span className="signature-location">Lagos, Nigeria</span>
             </div>
-            <p className="eyebrow"><span /> A considered wardrobe, made close to home</p>
-            <h1>Good things<br />are <em>meant to be worn.</em></h1>
+            <p className="eyebrow"><span /> Verified social commerce · Direct WhatsApp orders</p>
+            <h1>Good things,<br /><em>meant to be ordered.</em></h1>
             <p className="hero-description">{profile.bio}</p>
-            <a className="text-arrow-link" href="#collection">Meet your next favourite <ArrowDownRight aria-hidden="true" /></a>
-            <div className="hero-press-line"><span>Small batches</span><i /><span>Lagos-made spirit</span><i /><span>Always personal</span></div>
+            <a className="text-arrow-link" href="#collection">Browse the catalog <ArrowDownRight aria-hidden="true" /></a>
+            <div className="hero-press-line">
+              <span>Gadgets & Tech</span>
+              <i />
+              <span>Fragrance & Beauty</span>
+              <i />
+              <span>Fashion & Sneakers</span>
+            </div>
           </div>
           <div className="editorial-image-wrap">
-            <img className="editorial-image" src="/images/aura-emerald-set.jpg" alt="Kemi linen set in deep emerald, styled for an easy Lagos afternoon" width={1024} height={1280} fetchPriority="high" />
-            <div className="image-caption"><span>01 — 04</span><span>Made to move with you</span></div>
-            <div className="image-note">THE<br />LINEN<br />EDIT</div>
+            <img
+              className="editorial-image"
+              src="https://images.unsplash.com/photo-1695048133142-1a20484d2569?auto=format&fit=crop&w=1000&q=80"
+              alt="Multi-niche verified products available to order direct on SendCart"
+              width={1024}
+              height={1280}
+              fetchPriority="high"
+            />
+            <div className="image-caption">
+              <span>01 — 04</span>
+              <span>Direct seller orders on WhatsApp</span>
+            </div>
+            <div className="image-note">SEND<br />CART<br />DIRECT</div>
           </div>
           <a className="floating-social" href={`https://instagram.com/${profile.instagram_handle}`} target="_blank" rel="noreferrer" aria-label={`Visit ${profile.store_name} on Instagram`}><Instagram /></a>
         </section>
