@@ -86,7 +86,7 @@ export const DEMO_PRODUCTS: ShopProduct[] = [
     compare_at_price: 480000,
     stock: 3,
     variants: ["128GB", "256GB", "512GB"],
-    image_url: "https://images.unsplash.com/photo-1695048133142-1a20484d2569?auto=format&fit=crop&w=1000&q=80",
+    image_url: "https://images.unsplash.com/photo-1592750475338-74b7b21085ab?auto=format&fit=crop&w=1000&q=80",
     visible: true,
   },
   {
