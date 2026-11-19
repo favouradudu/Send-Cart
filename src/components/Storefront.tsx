@@ -309,17 +309,43 @@ export function Storefront({ storeSlug }: { storeSlug: string }) {
               <span>Fashion & Sneakers</span>
             </div>
           </div>
-          <div className="editorial-image-wrap">
-            <img
-              className="editorial-image"
-              src="https://images.unsplash.com/photo-1695048133142-1a20484d2569?auto=format&fit=crop&w=1000&q=80"
-              alt="Multi-niche verified products available to order direct on SendCart"
-              width={1024}
-              height={1280}
-              fetchPriority="high"
-            />
+          <div className="hero-collage-wrap">
+            <div className="hero-collage-grid">
+              <a href="#collection" className="hero-collage-tile">
+                <img
+                  src="https://images.unsplash.com/photo-1592750475338-74b7b21085ab?auto=format&fit=crop&w=600&q=80"
+                  alt="Gadgets & Phones"
+                  loading="eager"
+                />
+                <span className="hero-collage-tag">Gadgets · ₦450k</span>
+              </a>
+              <a href="#collection" className="hero-collage-tile">
+                <img
+                  src="https://images.unsplash.com/photo-1592945403244-b3fbafd7f539?auto=format&fit=crop&w=600&q=80"
+                  alt="Luxury Fragrance"
+                  loading="eager"
+                />
+                <span className="hero-collage-tag">Fragrance · ₦18.5k</span>
+              </a>
+              <a href="#collection" className="hero-collage-tile">
+                <img
+                  src="/images/aura-emerald-set.jpg"
+                  alt="Relaxed Linen Set"
+                  loading="eager"
+                />
+                <span className="hero-collage-tag">Apparel · ₦48.5k</span>
+              </a>
+              <a href="#collection" className="hero-collage-tile">
+                <img
+                  src="https://images.unsplash.com/photo-1595950653106-6c9ebd614d3a?auto=format&fit=crop&w=600&q=80"
+                  alt="Retro Sneakers"
+                  loading="eager"
+                />
+                <span className="hero-collage-tag">Footwear · ₦38k</span>
+              </a>
+            </div>
             <div className="image-caption">
-              <span>01 — 04</span>
+              <span>01 — 04 Top Categories</span>
               <span>Direct seller orders on WhatsApp</span>
             </div>
             <div className="image-note">SEND<br />CART<br />DIRECT</div>
