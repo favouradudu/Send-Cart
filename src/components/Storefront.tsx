@@ -453,6 +453,8 @@ export function Storefront({ storeSlug }: { storeSlug: string }) {
           </a>
           <span>Thoughtfully found. Personally sent from Lagos.</span>
           <div className="store-footer-links">
+            <a href="/terms#pricing">Platform Pricing</a>
+            <a href="mailto:favouradudu33@gmail.com">Contact Support</a>
             <a href="/terms">Terms</a>
             <a href="/privacy">Privacy</a>
             <a href="/dashboard">
