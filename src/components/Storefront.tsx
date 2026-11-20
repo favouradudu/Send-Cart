@@ -447,7 +447,19 @@ export function Storefront({ storeSlug }: { storeSlug: string }) {
           <a className="text-arrow-link" href={`https://wa.me/${(profile.whatsapp_phone || DEMO_VENDOR_PHONE).replace(/\D/g, "")}`} target="_blank" rel="noreferrer">Say hello <ArrowRight aria-hidden="true" /></a>
         </section>
 
-        <footer className="store-footer"><a className="brand-wordmark" href="#top">send<span>cart</span></a><span>Thoughtfully found. Personally sent from Lagos.</span><a href="/dashboard">Your shop could look like this <ArrowUpRight /></a></footer>
+        <footer className="store-footer">
+          <a className="brand-wordmark" href="#top">
+            send<span>cart</span>
+          </a>
+          <span>Thoughtfully found. Personally sent from Lagos.</span>
+          <div className="store-footer-links">
+            <a href="/terms">Terms</a>
+            <a href="/privacy">Privacy</a>
+            <a href="/dashboard">
+              Seller Dashboard <ArrowUpRight />
+            </a>
+          </div>
+        </footer>
       </main>
       
       {/* Variant Selection Bottom Sheet */}
