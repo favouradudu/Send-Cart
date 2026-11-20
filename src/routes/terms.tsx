@@ -117,10 +117,10 @@ function TermsPage() {
 
           <section className="legal-section">
             <h2>6. Contact & Support</h2>
-            <p>For questions regarding these Terms or subscription billing, reach out to us:</p>
+            <p>For questions regarding these Terms, technical issues, or subscription billing, reach out to us:</p>
             <div className="legal-contact-card">
               <Mail className="h-4 w-4" />
-              <span>Support Email: <strong>support@sendcart.ng</strong></span>
+              <span>Support Email: <a href="mailto:favouradudu33@gmail.com" style={{ textDecoration: "underline", color: "inherit" }}><strong>favouradudu33@gmail.com</strong></a></span>
             </div>
             <p className="legal-location">SendCart Technologies · Lagos, Nigeria</p>
           </section>
