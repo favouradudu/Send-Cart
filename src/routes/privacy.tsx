@@ -83,7 +83,15 @@ function PrivacyPage() {
             <p>If you have any questions or requests regarding your personal data:</p>
             <div className="legal-contact-card">
               <Mail className="h-4 w-4" />
-              <span>Email: <strong>privacy@sendcart.ng</strong></span>
+              <span>
+                Email:{" "}
+                <a
+                  href="mailto:favouradudu33@gmail.com"
+                  style={{ textDecoration: "underline", color: "inherit" }}
+                >
+                  <strong>favouradudu33@gmail.com</strong>
+                </a>
+              </span>
             </div>
           </section>
         </div>
