@@ -1170,7 +1170,16 @@ export function VendorDashboard() {
           </TabsContent>
         </Tabs>
       </div>
-      <footer className="dashboard-footer"><span>Direct orders. Direct payments. Always yours.</span><a href="/">Back to the storefront <ArrowUpRight /></a></footer>
+      <footer className="dashboard-footer">
+        <span>SendCart · Direct orders. Direct payments. Always yours.</span>
+        <div className="dashboard-footer-links">
+          <a href="/terms#pricing">Platform Pricing</a>
+          <a href="mailto:favouradudu33@gmail.com">Contact Support</a>
+          <a href="/terms">Terms of Service</a>
+          <a href="/privacy">Privacy Policy</a>
+          <a href="/">Storefront <ArrowUpRight /></a>
+        </div>
+      </footer>
 
       <Sheet open={Boolean(selectedOrder)} onOpenChange={(open) => !open && setSelectedOrder(null)}>
         <SheetContent side="right" className="order-details-sheet">
