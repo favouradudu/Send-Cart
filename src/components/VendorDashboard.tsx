@@ -1302,7 +1302,6 @@ export function VendorDashboard() {
           )}
         </SheetContent>
       </Sheet>
-      
       {/* Dispatch Details Sheet */}
       <Sheet open={Boolean(dispatchOrderModal)} onOpenChange={(open) => !open && setDispatchOrderModal(null)}>
         <SheetContent side="right" className="order-details-sheet">
