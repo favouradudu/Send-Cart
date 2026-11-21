@@ -15,6 +15,7 @@ import {
   Menu,
   Minus,
   Plus,
+  Search,
   ShieldCheck,
   ShoppingBag,
   Sparkles,
@@ -64,6 +65,7 @@ export function Storefront({ storeSlug }: { storeSlug: string }) {
   const [products, setProducts] = useState<ShopProduct[]>(DEMO_PRODUCTS);
   const [cart, setCart] = useState<CartLine[]>([]);
   const [category, setCategory] = useState("All items");
+  const [searchQuery, setSearchQuery] = useState("");
   const [cartOpen, setCartOpen] = useState(false);
   const [checkoutOpen, setCheckoutOpen] = useState(false);
   const [selectedVariants, setSelectedVariants] = useState<Record<string, string>>({});
@@ -126,9 +128,24 @@ export function Storefront({ storeSlug }: { storeSlug: string }) {
     () => ["All items", ...new Set(products.filter((item) => item.visible).map((item) => item.category))],
     [products],
   );
-  const filteredProducts = products.filter(
-    (product) => product.visible && (category === "All items" || product.category === category),
+  const filteredProducts = useMemo(() => {
+    const q = searchQuery.trim().toLowerCase();
+    return products.filter((product) => {
+      if (!product.visible) return false;
+      const matchesCat = category === "All items" || product.category === category;
+      if (!matchesCat) return false;
+      if (!q) return true;
+
+      const matchesName = product.name.toLowerCase().includes(q);
+      const matchesCategoryName = product.category.toLowerCase().includes(q);
+      const matchesVariants = (product.variants || []).some((v) =>
+        v.toLowerCase().includes(q)
+      );
+      return matchesName || matchesCategoryName || matchesVariants;
+    });
+  }, [products, category, searchQuery]
   );
+  
   const itemCount = cart.reduce((sum, item) => sum + item.quantity, 0);
   const subtotal = cart.reduce((sum, item) => sum + item.product.price * item.quantity, 0);
   const deliveryFee = profile.delivery_zones[deliveryZone]?.fee ?? 0;
@@ -368,16 +385,73 @@ export function Storefront({ storeSlug }: { storeSlug: string }) {
             <div><p className="eyebrow"><span /> The good things</p><h2>A little of what<br />you <em>love.</em></h2></div>
             <p>Carefully selected items.<br />Direct from the vendor to you.</p>
           </div>
+
+          {/* Quick Search Bar */}
+          <div className="storefront-search-wrap">
+            <Search aria-hidden="true" className="storefront-search-icon" />
+            <input
+              type="search"
+              className="storefront-search-input"
+              placeholder="Search items, sizes, scents, or storage…"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              aria-label="Search catalog"
+            />
+            {searchQuery && (
+              <button
+                type="button"
+                className="storefront-search-clear"
+                onClick={() => setSearchQuery("")}
+                aria-label="Clear search"
+              >
+                <X aria-hidden="true" />
+              </button>
+            )}
+          </div>
+
           <div className="collection-toolbar" aria-label="Filter collection">
             <div className="category-tabs" role="group" aria-label="Product categories">
-              {categories.map((item) => <button key={item} className={`category-tab ${category === item ? "is-current" : ""}`} onClick={() => setCategory(item)}>{item}<span>{item === "All items" ? products.filter((p) => p.visible).length : products.filter((p) => p.visible && p.category === item).length}</span></button>)}
+              {categories.map((item) => (
+                <button
+                  key={item}
+                  className={`category-tab ${category === item ? "is-current" : ""}`}
+                  onClick={() => setCategory(item)}
+                >
+                  {item}
+                  <span>
+                    {item === "All items"
+                      ? products.filter((p) => p.visible).length
+                      : products.filter((p) => p.visible && p.category === item).length}
+                  </span>
+                </button>
+              ))}
             </div>
             <span className="stock-note">In stock & ready to dispatch <Sparkles aria-hidden="true" /></span>
-          </div>
+          </div>  
           {isLoading ? (
             <div className="empty-store">Just opening our doors…</div>
           ) : filteredProducts.length === 0 ? (
-            <div className="empty-store"><Store aria-hidden="true" /><p>This little shop is getting ready. Visit again soon.</p></div>
+            <div className="empty-store">
+              <Store aria-hidden="true" />
+              {searchQuery ? (
+                <div>
+                  <p>No products matching “{searchQuery}” in {category}.</p>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="mt-3"
+                    onClick={() => {
+                      setSearchQuery("");
+                      setCategory("All items");
+                    }}
+                  >
+                    Clear search & filters
+                  </Button>
+                </div>
+              ) : (
+                <p>This little shop is getting ready. Visit again soon.</p>
+              )}
+            </div>
           ) : (
             <div className="product-grid">
               {filteredProducts.map((product, index) => {
