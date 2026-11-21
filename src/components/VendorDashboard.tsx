@@ -83,6 +83,10 @@ export function VendorDashboard() {
   const [settings, setSettings] = useState<ShopProfile | null>(null);
   const [editingProductId, setEditingProductId] = useState<string | null>(null);
   const [draftProduct, setDraftProduct] = useState({
+  const [dispatchOrderModal, setDispatchOrderModal] = useState<OrderRecord | null>(null);
+  const [dispatchRiderPhone, setDispatchRiderPhone] = useState("");
+  const [dispatchWaybillNote, setDispatchWaybillNote] = useState("");
+  
     name: "",
     category: "New Arrivals",
     description: "",
@@ -528,19 +532,65 @@ export function VendorDashboard() {
     }
   };
 
-  const saveOrderStatus = async (order: OrderRecord, status: OrderStatus) => {
+    const handleStatusChangeRequest = (order: OrderRecord, status: OrderStatus) => {
+    if (status === "dispatched") {
+      setDispatchOrderModal(order);
+      setDispatchRiderPhone("");
+      setDispatchWaybillNote("");
+      return;
+    }
+    void saveOrderStatus(order, status);
+  };
+
+  const saveOrderStatus = async (
+    order: OrderRecord,
+    status: OrderStatus,
+    dispatchInfo?: { riderPhone?: string; waybillNote?: string }
+  ) => {
     if (!userId) return;
-    const { error } = await supabase.from("orders").update({ status }).eq("id", order.id).eq("vendor_id", userId);
+
+    const { error } = await supabase
+      .from("orders")
+      .update({ status } as any)
+      .eq("id", order.id)
+      .eq("vendor_id", userId);
+
     if (error) {
       toast.error("We couldn’t update this order.");
       return;
     }
-    setOrders((current) => current.map((item) => item.id === order.id ? { ...item, status } : item));
+
+    setOrders((current) =>
+      current.map((item) => (item.id === order.id ? { ...item, status } : item))
+    );
     toast.success(`Order ${order.order_number} marked ${statusLabels[status]?.toLowerCase() ?? status}.`);
+
     const phone = order.customer_phone.replace(/\D/g, "");
     if (phone.length >= 8) {
-      const text = encodeURIComponent(`Hello ${order.customer_name}, a quick update from ${profile?.store_name}: your order ${order.order_number} is now ${statusLabels[status]?.toLowerCase() ?? status}.`);
-      window.open(`https://wa.me/${phone}?text=${text}`, "_blank", "noopener,noreferrer");
+      let message = "";
+
+      if (status === "dispatched") {
+        const dest = order.delivery_address || order.delivery_zone;
+        message =
+          `Hello ${order.customer_name}, great news from ${profile?.store_name}!\n\n` +
+          `Your order ${order.order_number} has been dispatched! 🛵📦\n\n` +
+          `📍 Destination: ${dest}\n` +
+          (dispatchInfo?.riderPhone ? `📞 Rider / Driver Phone: ${dispatchInfo.riderPhone}\n` : "") +
+          (dispatchInfo?.waybillNote ? `📋 Waybill / Park Note: ${dispatchInfo.waybillNote}\n` : "") +
+          `\nPlease keep your phone reachable. Thank you for shopping with us!`;
+      } else if (status === "paid") {
+        message =
+          `Hello ${order.customer_name}, your payment for order ${order.order_number} has been confirmed by ${profile?.store_name}! 🎉\n\n` +
+          `We are currently preparing and packing your package for dispatch.`;
+      } else if (status === "delivered") {
+        message =
+          `Hello ${order.customer_name}, your order ${order.order_number} from ${profile?.store_name} has been marked as delivered! 📦✨\n\n` +
+          `Thank you for trusting us! Please let us know if everything arrived safely.`;
+      } else {
+        message = `Hello ${order.customer_name}, update from ${profile?.store_name}: your order ${order.order_number} is now ${statusLabels[status]?.toLowerCase() ?? status}.`;
+      }
+
+      window.open(`https://wa.me/${phone}?text=${encodeURIComponent(message)}`, "_blank", "noopener,noreferrer");
     }
   };
 
@@ -1252,7 +1302,83 @@ export function VendorDashboard() {
           )}
         </SheetContent>
       </Sheet>
+      
+      {/* Dispatch Details Sheet */}
+      <Sheet open={Boolean(dispatchOrderModal)} onOpenChange={(open) => !open && setDispatchOrderModal(null)}>
+        <SheetContent side="right" className="order-details-sheet">
+          <SheetHeader className="order-details-header">
+            <p className="eyebrow">Dispatch Notification</p>
+            <SheetTitle>Send Dispatch Details</SheetTitle>
+            <SheetDescription>
+              Add the rider or waybill info for order {dispatchOrderModal?.order_number}.
+            </SheetDescription>
+          </SheetHeader>
 
+          {dispatchOrderModal && (
+            <div className="order-details-body" style={{ marginTop: "1rem" }}>
+              <div className="order-details-card">
+                <h4>Customer & Destination</h4>
+                <p style={{ margin: "0.25rem 0", fontSize: "14px" }}>
+                  Customer: <strong>{dispatchOrderModal.customer_name}</strong> ({dispatchOrderModal.customer_phone})
+                </p>
+                <p style={{ margin: "0.25rem 0", fontSize: "13px", color: "var(--muted-foreground)" }}>
+                  Delivery: <strong>{dispatchOrderModal.delivery_address || dispatchOrderModal.delivery_zone}</strong>
+                </p>
+              </div>
+
+              <div className="order-details-card" style={{ display: "grid", gap: "10px", marginTop: "10px" }}>
+                <h4>Dispatch & Courier Details</h4>
+                <div>
+                  <label style={{ fontSize: "12px", fontWeight: 600, display: "block", marginBottom: "4px" }}>
+                    Rider / Driver Phone Number
+                  </label>
+                  <Input
+                    placeholder="e.g. 0803 123 4567"
+                    value={dispatchRiderPhone}
+                    onChange={(e) => setDispatchRiderPhone(e.target.value)}
+                  />
+                </div>
+
+                <div>
+                  <label style={{ fontSize: "12px", fontWeight: 600, display: "block", marginBottom: "4px" }}>
+                    Waybill / Park / Courier Note
+                  </label>
+                  <Input
+                    placeholder="e.g. Peace Mass Transit / Driver Musa or Speedaf Waybill #8492"
+                    value={dispatchWaybillNote}
+                    onChange={(e) => setDispatchWaybillNote(e.target.value)}
+                  />
+                </div>
+              </div>
+
+              <div style={{ display: "grid", gap: "8px", marginTop: "1.5rem" }}>
+                <Button
+                  onClick={() => {
+                    const ord = dispatchOrderModal;
+                    setDispatchOrderModal(null);
+                    void saveOrderStatus(ord, "dispatched", {
+                      riderPhone: dispatchRiderPhone.trim(),
+                      waybillNote: dispatchWaybillNote.trim(),
+                    });
+                  }}
+                >
+                  Send Dispatch WhatsApp & Update <ArrowUpRight style={{ width: 16, height: 16, marginLeft: 6 }} />
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    const ord = dispatchOrderModal;
+                    setDispatchOrderModal(null);
+                    void saveOrderStatus(ord, "dispatched");
+                  }}
+                >
+                  Update Status Without Message
+                </Button>
+              </div>
+            </div>
+          )}
+        </SheetContent>
+      </Sheet>
       <Sheet open={Boolean(upgradeTier)} onOpenChange={(open) => !open && setUpgradeTier(null)}>
         <SheetContent side="right" className="order-details-sheet">
           <SheetHeader className="order-details-header">
