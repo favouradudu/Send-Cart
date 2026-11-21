@@ -846,7 +846,7 @@ export function VendorDashboard() {
                      key={order.id}
                      order={order}
                      onOpen={() => void openOrderDetails(order)}
-                     onStatusChange={(status) => void saveOrderStatus(order, status)}
+                     onStatusChange={(status) => handleStatusChangeRequest(order, status)}
                    />
                  ))
                ) : (
