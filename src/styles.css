@@ -1725,3 +1725,66 @@
   font-size: 15px;
   font-weight: 600;
 }
+
+/* Storefront Catalog Search */
+.storefront-search-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+  margin-top: 28px;
+  max-width: 460px;
+}
+
+.storefront-search-icon {
+  position: absolute;
+  left: 14px;
+  width: 16px;
+  height: 16px;
+  color: var(--muted-foreground);
+  pointer-events: none;
+}
+
+.storefront-search-input {
+  width: 100%;
+  height: 42px;
+  padding: 0 40px 0 38px;
+  font-family: var(--font-sans);
+  font-size: 13px;
+  background-color: var(--card);
+  color: var(--foreground);
+  border: 1px solid var(--border);
+  border-radius: 0;
+  outline: none;
+  transition: border-color 0.15s ease;
+}
+
+.storefront-search-input:focus {
+  border-color: var(--foreground);
+}
+
+.storefront-search-input::placeholder {
+  color: var(--muted-foreground);
+  font-size: 12px;
+}
+
+.storefront-search-clear {
+  position: absolute;
+  right: 10px;
+  background: none;
+  border: none;
+  padding: 4px;
+  color: var(--muted-foreground);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.storefront-search-clear svg {
+  width: 14px;
+  height: 14px;
+}
+
+.storefront-search-clear:hover {
+  color: var(--foreground);
+}
