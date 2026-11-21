@@ -567,7 +567,19 @@ export function Storefront({ storeSlug }: { storeSlug: string }) {
                   </Button></div><small>Please confirm these details with the seller on WhatsApp before transferring.</small></div>
               </div>
               {isDemo && <p className="demo-transfer-note">Demo shop · sample transfer details only. Please don’t send money.</p>}
-              <SheetFooter className="cart-sheet-footer"><Button variant="outline" onClick={goToOrder}>Back to the collection</Button><Button asChild><a href={`https://wa.me/${(profile.whatsapp_phone || DEMO_VENDOR_PHONE).replace(/\D/g, "")}`} target="_blank" rel="noreferrer">Open WhatsApp <ArrowUpRight aria-hidden="true" /></a></Button></SheetFooter>
+              <SheetFooter className="cart-sheet-footer">
+                <Button variant="outline" asChild>
+                  <a href={`/order/${order.order_number}`} target="_blank" rel="noreferrer">
+                    Track receipt
+                  </a>
+                </Button>
+                <Button variant="outline" onClick={goToOrder}>Back to the collection</Button>
+                <Button asChild>
+                  <a href={`https://wa.me/${(profile.whatsapp_phone || DEMO_VENDOR_PHONE).replace(/\D/g, "")}`} target="_blank" rel="noreferrer">
+                    Open WhatsApp <ArrowUpRight aria-hidden="true" />
+                  </a>
+                </Button>
+              </SheetFooter>
             </>
           ) : (
             <>
