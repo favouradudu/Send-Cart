@@ -82,11 +82,11 @@ export function VendorDashboard() {
   const [orderSearch, setOrderSearch] = useState("");
   const [settings, setSettings] = useState<ShopProfile | null>(null);
   const [editingProductId, setEditingProductId] = useState<string | null>(null);
-  const [draftProduct, setDraftProduct] = useState({
   const [dispatchOrderModal, setDispatchOrderModal] = useState<OrderRecord | null>(null);
   const [dispatchRiderPhone, setDispatchRiderPhone] = useState("");
   const [dispatchWaybillNote, setDispatchWaybillNote] = useState("");
-  
+
+  const [draftProduct, setDraftProduct] = useState({
     name: "",
     category: "New Arrivals",
     description: "",
