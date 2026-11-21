@@ -11,6 +11,7 @@ import {
   Copy,
   Heart,
   Instagram,
+  Loarder2,
   Menu,
   Minus,
   Plus,
@@ -73,6 +74,7 @@ export function Storefront({ storeSlug }: { storeSlug: string }) {
   const [deliveryAddress, setDeliveryAddress] = useState("");
   const [deliveryZone, setDeliveryZone] = useState(() => Object.keys(DEMO_PROFILE.delivery_zones)[0] ?? "Lagos Mainland");
   const [order, setOrder] = useState<PlacedOrder | null>(null);
+  const [submittingOrder, setSubmittingOrder] = useState(false);
   const [isLoading, setIsLoading] = useState(() => storeSlug !== DEMO_SLUG);
   const [accountCopied, setAccountCopied] = useState(false);
 
@@ -174,74 +176,82 @@ export function Storefront({ storeSlug }: { storeSlug: string }) {
   };
 
   const placeOrder = async () => {
+    if (submittingOrder) return;
     if (!customerName.trim() || customerPhone.replace(/\D/g, "").length < 8 || !deliveryAddress.trim() || cart.length === 0) {
       toast.error("Add your name, WhatsApp number, and street address with a landmark.");
       return;
     }
-    let createdOrder: PlacedOrder;
-    if (isDemo) {
-      createdOrder = {
-        order_number: `SC-ORD-${crypto.randomUUID().replaceAll("-", "").slice(0, 8).toUpperCase()}`,
-        customer_name: customerName.trim(),
-        customer_phone: customerPhone.trim(),
-        delivery_zone: deliveryZone,
-        delivery_address: deliveryAddress.trim(),
-        delivery_fee: deliveryFee,
-        subtotal,
-        total: subtotal + deliveryFee,
-        items: [...cart],
-      };
-      setProducts((current) =>
-        current.map((product) => {
-          const purchased = cart.find((line) => line.product.id === product.id);
-          return purchased ? { ...product, stock: Math.max(0, product.stock - purchased.quantity) } : product;
-        }),
-      );
-    } else {
-      const { data, error } = await supabase.rpc("place_store_order" as any, {
-        p_vendor_id: profile.id,
-        p_customer_name: customerName.trim(),
-        p_customer_phone: customerPhone.trim(),
-        p_delivery_zone: deliveryZone,
-        p_delivery_address: deliveryAddress.trim(),
-        p_items: cart.map((item) => ({
-          product_id: item.product.id,
-          quantity: item.quantity,
-          variant: item.variant,
-        })),
-      });
-      if (error) {
-        toast.error(error.message.includes("monthly order limit") ? "This store has reached its monthly order limit." : error.message);
-        return;
-      }
-      const saved = data as unknown as Omit<PlacedOrder, "items">;
-      createdOrder = { ...saved, delivery_address: deliveryAddress.trim(), items: [...cart] };
-    }
 
-    setOrder(createdOrder);
-    setCheckoutOpen(false);
-    setCartOpen(true);
-    const text = buildWhatsAppOrderMessage({
-      orderNumber: createdOrder.order_number,
-      customerName: createdOrder.customer_name,
-      customerPhone: createdOrder.customer_phone,
-      deliveryZone: createdOrder.delivery_zone,
-      deliveryAddress: deliveryAddress.trim(),
-      deliveryFee: createdOrder.delivery_fee,
-      subtotal: createdOrder.subtotal,
-      total: createdOrder.total,
-      items: createdOrder.items.map((item) => ({
-        name: item.product.name,
-        quantity: item.quantity,
-        unitPrice: item.product.price,
-        variant: item.variant,
-      })),
-      bankName: profile.bank_name,
-      bankAccount: profile.bank_account,
-      bankAccountName: profile.bank_account_name,
-    });
-    const phone = (profile.whatsapp_phone || DEMO_VENDOR_PHONE).replace(/\D/g, "");
-    window.open(`https://wa.me/${phone}?text=${encodeURIComponent(text)}`, "_blank", "noopener,noreferrer");
+    setSubmittingOrder(true);
+
+    try {
+      let createdOrder: PlacedOrder;
+      if (isDemo) {
+        createdOrder = {
+          order_number: `SC-ORD-${crypto.randomUUID().replaceAll("-", "").slice(0, 8).toUpperCase()}`,
+          customer_name: customerName.trim(),
+          customer_phone: customerPhone.trim(),
+          delivery_zone: deliveryZone,
+          delivery_address: deliveryAddress.trim(),
+          delivery_fee: deliveryFee,
+          subtotal,
+          total: subtotal + deliveryFee,
+          items: [...cart],
+        };
+        setProducts((current) =>
+          current.map((product) => {
+            const purchased = cart.find((line) => line.product.id === product.id);
+            return purchased ? { ...product, stock: Math.max(0, product.stock - purchased.quantity) } : product;
+          }),
+        );
+      } else {
+        const { data, error } = await supabase.rpc("place_store_order" as any, {
+          p_vendor_id: profile.id,
+          p_customer_name: customerName.trim(),
+          p_customer_phone: customerPhone.trim(),
+          p_delivery_zone: deliveryZone,
+          p_delivery_address: deliveryAddress.trim(),
+          p_items: cart.map((item) => ({
+            product_id: item.product.id,
+            quantity: item.quantity,
+            variant: item.variant,
+          })),
+        });
+        if (error) {
+          toast.error(error.message.includes("monthly order limit") ? "This store has reached its monthly order limit." : error.message);
+          return;
+        }
+        const saved = data as unknown as Omit<PlacedOrder, "items">;
+        createdOrder = { ...saved, delivery_address: deliveryAddress.trim(), items: [...cart] };
+      }
+
+      setOrder(createdOrder);
+      setCheckoutOpen(false);
+      setCartOpen(true);
+      const text = buildWhatsAppOrderMessage({
+        orderNumber: createdOrder.order_number,
+        customerName: createdOrder.customer_name,
+        customerPhone: createdOrder.customer_phone,
+        deliveryZone: createdOrder.delivery_zone,
+        deliveryAddress: deliveryAddress.trim(),
+        deliveryFee: createdOrder.delivery_fee,
+        subtotal: createdOrder.subtotal,
+        total: createdOrder.total,
+        items: createdOrder.items,
+        vendorBank: profile.bank_name,
+        vendorAccount: profile.bank_account,
+        vendorAccountName: profile.bank_account_name,
+      });
+      const vendorPhone = (profile.whatsapp_number || DEMO_VENDOR_PHONE).replace(/\D/g, "");
+      window.open(`https://wa.me/${vendorPhone}?text=${encodeURIComponent(text)}`, "_blank");
+      toast.success("Order recorded. Opened WhatsApp to send it to the seller.");
+      setCart([]);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Failed to place order";
+      toast.error(message);
+    } finally {
+      setSubmittingOrder(false);
+    }
   };
 
   const copyAccount = async () => {
@@ -705,8 +715,21 @@ export function Storefront({ storeSlug }: { storeSlug: string }) {
           </div>
           <p className="transfer-disclaimer">You’ll transfer directly to the seller. We never hold your money.</p>
           <SheetFooter className="cart-sheet-footer">
-            <Button className="continue-checkout" onClick={() => void placeOrder()}>
-              Place order on WhatsApp <ArrowUpRight aria-hidden="true" />
+            <Button
+              className="continue-checkout"
+              disabled={submittingOrder}
+              onClick={() => void placeOrder()}
+            >
+              {submittingOrder ? (
+                <>
+                  <Loader2 className="animate-spin" aria-hidden="true" style={{ width: 15, height: 15, marginRight: 6 }} />
+                  Preparing order…
+                </>
+              ) : (
+                <>
+                  Place order on WhatsApp <ArrowUpRight aria-hidden="true" />
+                </>
+              )}
             </Button>
           </SheetFooter>
         </SheetContent>
