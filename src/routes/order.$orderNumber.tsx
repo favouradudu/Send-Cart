@@ -30,6 +30,7 @@ interface TrackingData {
     subtotal: number;
     total: number;
     status: string;
+    dispatch_note?: string;
   };
   vendor: {
     store_name: string;
@@ -196,6 +197,26 @@ function OrderTrackingPage() {
               );
             })}
           </div>
+
+          {/* Persistent Waybill / Rider Note */}
+          {order.dispatch_note && (
+            <div className="dispatch-note-box" style={{
+              marginTop: "16px",
+              padding: "12px 14px",
+              background: "var(--secondary)",
+              border: "1px solid var(--border)",
+              fontSize: "13px",
+              display: "flex",
+              alignItems: "flex-start",
+              gap: "10px"
+            }}>
+              <Truck className="w-5 h-5 mt-0.5 shrink-0" />
+              <div>
+                <strong style={{ display: "block", marginBottom: "2px" }}>Dispatch & Courier Details:</strong>
+                <span style={{ color: "var(--foreground)" }}>{order.dispatch_note}</span>
+              </div>
+            </div>
+          )}
         </section>
 
         {/* Bank Transfer Details */}
