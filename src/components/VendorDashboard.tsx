@@ -532,7 +532,7 @@ export function VendorDashboard() {
     }
   };
 
-    const handleStatusChangeRequest = (order: OrderRecord, status: OrderStatus) => {
+  const handleStatusChangeRequest = (order: OrderRecord, status: OrderStatus) => {
     if (status === "dispatched") {
       setDispatchOrderModal(order);
       setDispatchRiderPhone("");
@@ -542,16 +542,30 @@ export function VendorDashboard() {
     void saveOrderStatus(order, status);
   };
 
-  const saveOrderStatus = async (
+    const saveOrderStatus = async (
     order: OrderRecord,
     status: OrderStatus,
     dispatchInfo?: { riderPhone?: string; waybillNote?: string }
   ) => {
     if (!userId) return;
 
+    // Compile the dispatch note if vendor provided phone or waybill info
+    let noteText: string | undefined = undefined;
+    if (dispatchInfo) {
+      const parts: string[] = [];
+      if (dispatchInfo.riderPhone) parts.push(`Rider: ${dispatchInfo.riderPhone}`);
+      if (dispatchInfo.waybillNote) parts.push(`Waybill / Note: ${dispatchInfo.waybillNote}`);
+      if (parts.length > 0) noteText = parts.join(" · ");
+    }
+
+    const updatePayload: Record<string, any> = { status };
+    if (noteText) {
+      updatePayload.dispatch_note = noteText;
+    }
+
     const { error } = await supabase
       .from("orders")
-      .update({ status } as any)
+      .update(updatePayload as any)
       .eq("id", order.id)
       .eq("vendor_id", userId);
 
@@ -561,10 +575,10 @@ export function VendorDashboard() {
     }
 
     setOrders((current) =>
-      current.map((item) => (item.id === order.id ? { ...item, status } : item))
+      current.map((item) => (item.id === order.id ? { ...item, status, ...(noteText ? { dispatch_note: noteText } : {}) } : item))
     );
     toast.success(`Order ${order.order_number} marked ${statusLabels[status]?.toLowerCase() ?? status}.`);
-
+      
     const phone = order.customer_phone.replace(/\D/g, "");
     if (phone.length >= 8) {
       let message = "";
