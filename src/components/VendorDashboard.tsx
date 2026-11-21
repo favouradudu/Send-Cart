@@ -389,7 +389,7 @@ export function VendorDashboard() {
       price: String(product.price),
       compare_at_price: product.compare_at_price ? String(product.compare_at_price) : "",
       stock: String(product.stock),
-      variants: product.variants.join(", "),
+      variants: (product.variants ?? []).filter(Boolean).join(", "),
       image_url: product.image_url,
     });
     setEditingProductId(product.id);
