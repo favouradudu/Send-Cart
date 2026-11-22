@@ -7,6 +7,7 @@ import {
   Banknote,
   Check,
   Copy,
+  Download,
   ExternalLink,
   Eye,
   EyeOff,
@@ -643,7 +644,62 @@ export function VendorDashboard() {
 
   const matchesOrderSearch = (order: OrderRecord) => `${order.customer_name} ${order.order_number} ${order.customer_phone}`.toLowerCase().includes(orderSearch.toLowerCase());
   const filteredOrders = orders.filter((order) => (orderFilter === "all" || order.status === orderFilter) && matchesOrderSearch(order));
+  const exportOrdersToCSV = () => {
+    const listToExport = filteredOrders.length ? filteredOrders : orders;
+    if (!listToExport.length) {
+      toast.error("No orders to export.");
+      return;
+    }
 
+    const headers = [
+      "Order Number",
+      "Date",
+      "Customer Name",
+      "Customer Phone",
+      "Delivery Zone",
+      "Delivery Address / Landmark",
+      "Status",
+      "Delivery Fee (NGN)",
+      "Total (NGN)",
+      "Dispatch / Waybill Note",
+    ];
+
+    const escapeCSV = (val: string | number | undefined | null) => {
+      if (val === undefined || val === null) return '""';
+      const str = String(val).replace(/"/g, '""');
+      return `"${str}"`;
+    };
+
+    const rows = listToExport.map((ord) => [
+      escapeCSV(ord.order_number),
+      escapeCSV(new Date(ord.created_at).toLocaleDateString("en-NG", { dateStyle: "medium" })),
+      escapeCSV(ord.customer_name),
+      // \t tab prefix ensures Excel preserves leading zeros in Nigerian numbers (e.g. 080...)
+      escapeCSV(ord.customer_phone ? `\t${ord.customer_phone}` : ""),
+      escapeCSV(ord.delivery_zone),
+      escapeCSV(ord.delivery_address || ""),
+      escapeCSV(statusLabels[ord.status] || ord.status),
+      escapeCSV(ord.delivery_fee ?? 0),
+      escapeCSV(ord.total),
+      escapeCSV((ord as any).dispatch_note || ""),
+    ]);
+
+    // Prepend UTF-8 BOM (\uFEFF) so Excel opens Nigerian special characters and formats cleanly
+    const csvContent = [headers.join(","), ...rows.map((r) => r.join(","))].join("\r\n");
+    const blob = new Blob(["\uFEFF" + csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    const today = new Date().toISOString().slice(0, 10);
+    link.href = url;
+    link.setAttribute("download", `SendCart_Orders_${profile.store_slug || "export"}_${today}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+
+    toast.success(`Exported ${listToExport.length} ${listToExport.length === 1 ? "order" : "orders"} to CSV.`);
+  };
+  
   return (
     <main className="dashboard-page">
       <header className="dashboard-topbar">
@@ -844,7 +900,38 @@ export function VendorDashboard() {
           </TabsContent>
           <TabsContent value="orders" className="dashboard-tab-content">
             <div className="dashboard-section-heading orders-page-heading"><div><p className="eyebrow">Every order, in one place</p><h2>On the way to something good.</h2></div><span className="orders-total">{orders.length} {orders.length === 1 ? "order" : "orders"}</span></div>
-            <div className="order-tools"><div className="order-search"><Search /><Input aria-label="Find an order" placeholder="Find a customer or order number" value={orderSearch} onChange={(event) => setOrderSearch(event.target.value)} /></div><select className="dashboard-select" aria-label="Filter orders by status" value={orderFilter} onChange={(event) => setOrderFilter(event.target.value)}><option value="all">Every order</option>{Object.entries(statusLabels).map(([key, label]) => <option value={key} key={key}>{label}</option>)}</select></div>
+            <div className="order-tools">
+              <div className="order-search">
+                <Search />
+                <Input
+                  aria-label="Find an order"
+                  placeholder="Find a customer or order number"
+                  value={orderSearch}
+                  onChange={(event) => setOrderSearch(event.target.value)}
+                />
+              </div>
+              <select
+                className="dashboard-select"
+                aria-label="Filter orders by status"
+                value={orderFilter}
+                onChange={(event) => setOrderFilter(event.target.value)}
+              >
+                <option value="all">Every order</option>
+                {Object.entries(statusLabels).map(([key, label]) => (
+                  <option value={key} key={key}>{label}</option>
+                ))}
+              </select>
+
+              {/* One-Tap CSV / Excel Export */}
+              <Button
+                variant="outline"
+                className="order-export-btn"
+                onClick={exportOrdersToCSV}
+                title="Download orders as Excel / CSV spreadsheet"
+              >
+                <Download className="w-3.5 h-3.5 mr-1.5" /> Export CSV
+              </Button>
+            </div>
             <div className="orders-table">
               <div className="orders-table-head">
                 <span>ORDER</span>
