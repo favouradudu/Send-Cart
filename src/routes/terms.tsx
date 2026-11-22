@@ -72,12 +72,13 @@ function TermsPage() {
             <h2>3. Software Subscription Plans & Fees</h2>
             <p>
               SendCart charges vendors directly for access to our catalog and order-management software. 
-              Our pricing structure is as follows:
+              Our tiered pricing structure is as follows:
             </p>
             <ul className="legal-list">
-              <li><strong>Starter Free Plan:</strong> Up to 30 customer orders per calendar month at ₦0.</li>
-              <li><strong>Order Credits Top-Up:</strong> ₦500 one-off payment for an additional 50 order credits. Credits never expire.</li>
-              <li><strong>Unlimited Monthly Plan:</strong> ₦2,000 per month for unlimited order processing and priority software updates.</li>
+              <li><strong>Starter (Free):</strong> ₦0 / month. Up to 8 active products and 30 customer orders per calendar month.</li>
+              <li><strong>Booster Pack:</strong> ₦1,000 one-off payment for an additional 50 order credits. Credits never expire and activate when your monthly quota is exhausted.</li>
+              <li><strong>Pro Merchant:</strong> ₦4,500 per month for up to 50 products, unlimited orders, and priority software updates.</li>
+              <li><strong>Power Store:</strong> ₦10,000 per month for unlimited products, unlimited orders, custom domain support, and dedicated onboarding assistance.</li>
             </ul>
             <p>
               Subscription fees cover software hosting, storage, and platform maintenance only. SendCart 
@@ -88,9 +89,9 @@ function TermsPage() {
           <section className="legal-section">
             <h2>4. Cancellation & Refund Policy</h2>
             <p>
-              Vendors on paid monthly plans may cancel their subscription at any time directly through the 
-              vendor dashboard. Upon cancellation, the store remains active on the unlimited tier until the 
-              end of the current billing cycle, after which it reverts to the standard free tier.
+              Vendors on paid monthly plans (Pro Merchant or Power Store) may cancel their subscription at any time directly through the 
+              vendor dashboard or by contacting SendCart support. Upon cancellation, the store remains active on the upgraded tier until the 
+              end of the current billing cycle, after which it reverts to the standard free Starter tier.
             </p>
             <p>
               Because order credits and software subscriptions are digital services provisioned immediately 
