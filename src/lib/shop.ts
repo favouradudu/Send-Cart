@@ -16,6 +16,8 @@ export type ShopProduct = {
 
 export type StoreTheme = "editorial" | "modern" | "bold";
 
+export type ShopPlan = "free" | "pro" | "power" | "unlimited";
+
 export type ShopProfile = {
   id: string;
   vendor_code?: string;
@@ -29,7 +31,7 @@ export type ShopProfile = {
   bank_account: string;
   bank_account_name: string;
   delivery_zones: Record<string, { fee: number }>;
-  plan: "free" | "unlimited";
+  plan: ShopPlan;
   order_credits: number;
   store_theme?: StoreTheme;
 };
@@ -169,9 +171,14 @@ export const formatNaira = (amount: number) =>
   `₦${new Intl.NumberFormat("en-NG", { maximumFractionDigits: 0 }).format(amount)}`;
 
 export const monthlyOrderLimit = 30;
-export const creditPackPrice = 500;
+export const freeProductLimit = 8;
+export const proProductLimit = 50;
+
+export const creditPackPrice = 1000;      // ₦1,000 for +50 order credits
 export const creditPackCount = 50;
-export const unlimitedMonthlyPrice = 2000;
+export const proMonthlyPrice = 4500;       // ₦4,500/month for up to 50 products & unlimited orders
+export const powerMonthlyPrice = 10000;    // ₦10,000/month for unlimited products & custom domain
+export const unlimitedMonthlyPrice = 4500; // alias for backwards compatibility
 
 export function isFreeOrderBlocked(monthOrderCount: number, credits: number): boolean {
   return monthOrderCount >= monthlyOrderLimit && credits <= 0;
