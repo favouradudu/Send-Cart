@@ -1788,3 +1788,18 @@
 .storefront-search-clear:hover {
   color: var(--foreground);
 }
+
+.order-export-btn {
+  height: 35px;
+  font-size: 10px;
+  white-space: nowrap;
+  border-radius: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.order-export-btn svg {
+  width: 13px;
+  height: 13px;
+}
