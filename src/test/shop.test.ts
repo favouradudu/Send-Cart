@@ -13,9 +13,11 @@ describe("Nigerian shop order rules", () => {
   });
 
   it("keeps the selected order upgrade amounts", () => {
-    expect([creditPackPrice, creditPackCount, unlimitedMonthlyPrice]).toEqual([500, 50, 2000]);
+    expect([creditPackPrice, creditPackCount, proMonthlyPrice, powerMonthlyPrice]).toEqual([
+      1000, 50, 4500, 10000,
+    ]);
   });
-
+  
   it("puts the customer, delivery, itemised total, and bank details into the WhatsApp message", () => {
     const message = buildWhatsAppOrderMessage({
       orderNumber: "SC-ORD-1234ABCD",
