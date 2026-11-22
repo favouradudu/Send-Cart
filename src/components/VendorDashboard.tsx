@@ -43,17 +43,19 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import {
-  DEMO_ORDERS,
-  DEMO_PRODUCTS,
-  DEMO_PROFILE,
-  creditPackCount,
   creditPackPrice,
   formatNaira,
+  freeProductLimit,
   monthlyOrderLimit,
-  unlimitedMonthlyPrice,
+  powerMonthlyPrice,
+  proMonthlyPrice,
+  proProductLimit,
   type ShopProduct,
   type ShopProfile,
 } from "@/lib/shop";
+
+// Change upgradeTier state from "credits" | "unlimited" to support all tiers:
+const [upgradeTier, setUpgradeTier] = useState<"credits" | "pro" | "power" | null>(null);
 
 type OrderStatus = "pending_confirmation" | "paid" | "dispatched" | "delivered";
 type OrderRecord = Omit<(typeof DEMO_ORDERS)[number], "status"> & { id: string; status: OrderStatus };
@@ -198,10 +200,27 @@ export function VendorDashboard() {
       const yearMonth = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, "0")}`;
       const randomSuffix = Math.floor(1000 + Math.random() * 9000);
       const txnReference = `SC-TXN-${yearMonth}-${randomSuffix}`;
-      const amount = upgradeTier === "credits" ? creditPackPrice : unlimitedMonthlyPrice;
-      const planType = upgradeTier === "credits" ? "credits_50" : "unlimited_monthly";
-      const planName = upgradeTier === "credits" ? "50 Extra Order Credits" : "Unlimited Monthly Plan";
+      const amount =
+        upgradeTier === "credits"
+          ? creditPackPrice
+          : upgradeTier === "pro"
+            ? proMonthlyPrice
+            : powerMonthlyPrice;
 
+      const planType =
+        upgradeTier === "credits"
+          ? "booster_50"
+          : upgradeTier === "pro"
+            ? "pro_monthly"
+            : "power_monthly";
+
+      const planName =
+        upgradeTier === "credits"
+          ? "Booster Pack (+50 Order Credits)"
+          : upgradeTier === "pro"
+            ? "Pro Merchant (Up to 50 Products · Unlimited Orders)"
+            : "Power Store (Unlimited Products · Custom Domain)";
+      
       // 1. Log a PENDING record in platform_transactions (no instant entitlement)
       const { error: txnError } = await supabase.from("platform_transactions" as any).insert({
         vendor_id: userId,
@@ -427,6 +446,15 @@ export function VendorDashboard() {
     if (!userId || !draftProduct.name.trim() || !draftProduct.price || !draftProduct.stock || !draftProduct.image_url.trim()) {
       toast.error("Add a name, photo link, price and stock quantity first.");
       return;
+    }
+    // Enforce 8-product Starter limit on newly added products
+    if (!editingProductId && (!profile?.plan || profile?.plan === "free")) {
+      const activeCount = products.filter((p) => p.visible).length;
+      if (activeCount >= freeProductLimit) {
+        toast.error(`Starter free tier allows up to ${freeProductLimit} active products. Upgrade to Pro Merchant to add more!`);
+        setUpgradeTier("pro");
+        return;
+      }
     }
     const price = Number(draftProduct.price);
     const stock = Number(draftProduct.stock);
@@ -754,25 +782,40 @@ export function VendorDashboard() {
           <TabsContent value="overview" className="dashboard-tab-content">
             <div className="stats-grid"><article className="stat-block"><span>Orders this month</span><strong>{monthCount}<small> / {profile.plan === "unlimited" ? "∞" : monthlyOrderLimit}</small></strong><p>{profile.plan === "unlimited" ? "Unlimited orders" : `${Math.max(0, monthlyOrderLimit - monthCount)} orders left on your free plan`}</p></article><article className="stat-block"><span>On the rails</span><strong>{pendingOrders}</strong><p>Waiting for your confirmation</p></article><article className="stat-block"><span>On your shop floor</span><strong>{visibleProducts.length}</strong><p>Products customers can order</p></article></div>
             <div className="dashboard-overview-columns"><section className="dashboard-section orders-preview"><div className="dashboard-section-heading"><div><p className="eyebrow">The latest from your customers</p><h2>Recent orders</h2></div><Button variant="ghost" onClick={() => setActiveTab("orders")}>All orders <ArrowRight /></Button></div>{orders.slice(0, 3).length ? orders.slice(0, 3).map((order) => <OrderRow key={order.id} order={order} onOpen={() => setActiveTab("orders")} />) : <p className="empty-dashboard-note">Your first order will find its way here.</p>}</section><section className="dashboard-section share-preview"><p className="eyebrow">A shop of your own</p><h2>Share a little of<br />what you love.</h2><p>One lovely link for WhatsApp, your bio and everywhere you say hello.</p><div className="share-link-box"><span>{storeLink.replace(/^https?:\/\//, "") || "your-shop-link"}</span><Button size="icon" variant="ghost" aria-label="Copy shop link" onClick={() => void copyStoreLink()}><Copy /></Button></div><div className="share-qr"><QRCodeSVG value={storeLink || "https://example.com"} size={104} includeMargin bgColor="transparent" fgColor="currentColor" aria-label="Shop link QR code" /><span>Point your camera<br />to find our shop</span></div></section></div>
-            <section className="plan-strip"><div className="plan-icon"><Sparkles /></div><div><p className="eyebrow">A little breathing room</p><h2>Made for the way you sell.</h2><p>Free for your first 30 orders each month. Grow at your own pace, always keeping your money direct.</p></div>
+            <section className="plan-strip">
+              <div className="plan-icon"><Sparkles /></div>
+              <div>
+                <p className="eyebrow">A little breathing room</p>
+                <h2>Made for the way you sell.</h2>
+                <p>Free for up to 8 products and 30 monthly orders. Choose the shelf space that matches your shop.</p>
+              </div>
               <div className="plan-prices">
                 <Button
                   type="button"
-                   variant="outline"
-                   size="sm"
-                   className="plan-upgrade-btn"
-                   onClick={() => setUpgradeTier("credits")}
-                 >
-                   <strong>₦500</strong> · 50 order credits
-                 </Button>
-                 <Button
-                   type="button"
-                   size="sm"
-                   className="plan-upgrade-btn"
-                   onClick={() => setUpgradeTier("unlimited")}
+                  variant="outline"
+                  size="sm"
+                  className="plan-upgrade-btn"
+                  onClick={() => setUpgradeTier("credits")}
                 >
-                   <Sparkles /> <strong>₦2,000</strong> · Unlimited / month
-                 </Button>
+                  <strong>₦1,000</strong> · Booster (+50 credits)
+                </Button>
+                <Button
+                  type="button"
+                  size="sm"
+                  className="plan-upgrade-btn"
+                  onClick={() => setUpgradeTier("pro")}
+                >
+                  <Sparkles /> <strong>₦4,500</strong> · Pro / mo (50 items)
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="plan-upgrade-btn"
+                  onClick={() => setUpgradeTier("power")}
+                >
+                  <strong>₦10,000</strong> · Power / mo (Unlimited)
+                </Button>
               </div>
             </section>
           </TabsContent>
@@ -1510,7 +1553,11 @@ export function VendorDashboard() {
           <SheetHeader className="order-details-header">
             <p className="eyebrow">Shop upgrade · Direct transfer</p>
             <SheetTitle>
-              {upgradeTier === "credits" ? "50 Order Credits" : "Unlimited Monthly Plan"}
+              {upgradeTier === "credits"
+                ? "Booster Pack (+50 Credits)"
+                : upgradeTier === "pro"
+                  ? "Pro Merchant Plan"
+                  : "Power Store Plan"}
             </SheetTitle>
             <SheetDescription>
               Transfer directly to SendCart and send your payment screenshot to activate.
@@ -1522,12 +1569,25 @@ export function VendorDashboard() {
               <div className="order-details-card">
                 <h4>Plan summary</h4>
                 <p style={{ margin: "0.25rem 0", fontSize: "14px" }}>
-                  Plan: <strong>{upgradeTier === "credits" ? "50 Extra Order Credits" : "Unlimited Orders / Month"}</strong>
+                  Plan:{" "}
+                  <strong>
+                    {upgradeTier === "credits"
+                      ? "Booster Pack (+50 Order Credits · Never Expires)"
+                      : upgradeTier === "pro"
+                        ? "Pro Merchant (Up to 50 Products · Unlimited Orders)"
+                        : "Power Store (Unlimited Products · Custom Domain)"}
+                  </strong>
                 </p>
                 <p style={{ margin: "0.25rem 0", fontSize: "14px" }}>
                   Amount to transfer:{" "}
                   <strong style={{ fontSize: "18px", color: "var(--foreground)" }}>
-                    {formatNaira(upgradeTier === "credits" ? creditPackPrice : unlimitedMonthlyPrice)}
+                    {formatNaira(
+                      upgradeTier === "credits"
+                        ? creditPackPrice
+                        : upgradeTier === "pro"
+                          ? proMonthlyPrice
+                          : powerMonthlyPrice
+                    )}
                   </strong>
                 </p>
               </div>
