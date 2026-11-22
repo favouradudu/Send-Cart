@@ -5,6 +5,7 @@ import {
   ArrowUpRight,
   BadgeCheck,
   Banknote,
+  Camera,
   Check,
   Copy,
   Download,
@@ -66,6 +67,13 @@ const statusLabels: Record<OrderStatus, string> = {
   delivered: "Delivered",
 };
 
+const SENDCART_BILLING = {
+  bankName: "Ecobank Nigeria",
+  accountNumber: "3830083606",
+  accountName: "FAVOUR ISIOMA JOHN ADUDU",
+  supportWhatsApp: "2347014020231",
+};
+
 export function VendorDashboard() {
   const [userId, setUserId] = useState<string | null>(null);
   const [authMode, setAuthMode] = useState<VendorAuthMode>("signin");
@@ -86,7 +94,19 @@ export function VendorDashboard() {
   const [dispatchOrderModal, setDispatchOrderModal] = useState<OrderRecord | null>(null);
   const [dispatchRiderPhone, setDispatchRiderPhone] = useState("");
   const [dispatchWaybillNote, setDispatchWaybillNote] = useState("");
+  const [billingCopied, setBillingCopied] = useState(false);
 
+  const copyBillingAccount = async () => {
+    try {
+      await navigator.clipboard.writeText(SENDCART_BILLING.accountNumber);
+      setBillingCopied(true);
+      setTimeout(() => setBillingCopied(false), 2000);
+      toast.success("Ecobank account number copied!");
+    } catch {
+      toast.error("Couldn’t copy — please copy 3830083606 manually.");
+    }
+  };
+  
   const [draftProduct, setDraftProduct] = useState({
     name: "",
     category: "New Arrivals",
@@ -178,49 +198,55 @@ export function VendorDashboard() {
       const yearMonth = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, "0")}`;
       const randomSuffix = Math.floor(1000 + Math.random() * 9000);
       const txnReference = `SC-TXN-${yearMonth}-${randomSuffix}`;
-      const amount = upgradeTier === "credits" ? 500 : 2000;
+      const amount = upgradeTier === "credits" ? creditPackPrice : unlimitedMonthlyPrice;
       const planType = upgradeTier === "credits" ? "credits_50" : "unlimited_monthly";
+      const planName = upgradeTier === "credits" ? "50 Extra Order Credits" : "Unlimited Monthly Plan";
 
-      // 1. Record in legal platform_transactions ledger
-      await supabase.from("platform_transactions" as any).insert({
+      // 1. Log a PENDING record in platform_transactions (no instant entitlement)
+      const { error: txnError } = await supabase.from("platform_transactions" as any).insert({
         vendor_id: userId,
         reference: txnReference,
         amount,
         currency: "NGN",
         plan_type: planType,
-        payment_channel: "direct_upgrade",
-        status: "completed",
-        notes: upgradeTier === "credits" ? "50 Extra Order Credits Top-Up" : "Unlimited Monthly Plan Upgrade",
+        payment_channel: "direct_bank_transfer",
+        status: "pending",
+        notes: `Pending bank verification for ${planName}`,
       });
 
-      // 2. Update vendor profile status
-      if (upgradeTier === "credits") {
-        const nextCredits = (profile.order_credits ?? 0) + 50;
-        const { error } = await supabase
-          .from("profiles")
-          .update({ order_credits: nextCredits } as any)
-          .eq("id", userId);
-        if (error) throw error;
-        setProfile({ ...profile, order_credits: nextCredits });
-        toast.success(`Added 50 order credits! (Receipt: ${txnReference})`);
-      } else if (upgradeTier === "unlimited") {
-        const { error } = await supabase
-          .from("profiles")
-          .update({ plan: "unlimited" } as any)
-          .eq("id", userId);
-        if (error) throw error;
-        setProfile({ ...profile, plan: "unlimited" });
-        toast.success(`Upgraded to Unlimited plan! (Receipt: ${txnReference})`);
-      }
+      if (txnError) throw txnError;
+
+      // 2. Pre-fill WhatsApp message to SendCart Support with reference & store details
+      const whatsappMsg = [
+        `Hello SendCart Admin! I just initiated a shop upgrade payment:`,
+        ``,
+        `🏪 Store: ${profile.store_name} (${profile.store_slug || "vendor"})`,
+        `📦 Plan: ${planName}`,
+        `💰 Amount: ${formatNaira(amount)}`,
+        `🔖 Reference: ${txnReference}`,
+        ``,
+        `💳 Transferred to: ${SENDCART_BILLING.bankName}`,
+        `Account: ${SENDCART_BILLING.accountNumber} (${SENDCART_BILLING.accountName})`,
+        ``,
+        `📸 Attached is my payment transfer receipt/screenshot. Kindly verify and activate my plan. Thank you!`,
+      ].join("\n");
+
+      // 3. Open WhatsApp to SendCart Admin
+      window.open(
+        `https://wa.me/${SENDCART_BILLING.supportWhatsApp}?text=${encodeURIComponent(whatsappMsg)}`,
+        "_blank"
+      );
+
+      toast.success(`Upgrade request logged (${txnReference}). Send your receipt on WhatsApp to activate!`);
       setUpgradeTier(null);
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : "Upgrade failed";
-      toast.error(`Upgrade could not be completed: ${message}`);
+      const message = err instanceof Error ? err.message : "Upgrade request failed";
+      toast.error(`Could not log upgrade: ${message}`);
     } finally {
       setUpgradeBusy(false);
     }
   };
-
+  
     useEffect(() => {
     let active = true;
     const { data: listener } = supabase.auth.onAuthStateChange((event, session) => {
@@ -1482,49 +1508,96 @@ export function VendorDashboard() {
       <Sheet open={Boolean(upgradeTier)} onOpenChange={(open) => !open && setUpgradeTier(null)}>
         <SheetContent side="right" className="order-details-sheet">
           <SheetHeader className="order-details-header">
-            <p className="eyebrow">Shop upgrade</p>
+            <p className="eyebrow">Shop upgrade · Direct transfer</p>
             <SheetTitle>
               {upgradeTier === "credits" ? "50 Order Credits" : "Unlimited Monthly Plan"}
             </SheetTitle>
             <SheetDescription>
-              {upgradeTier === "credits"
-                ? "Top up your shop with 50 additional order credits that never expire."
-                : "Remove monthly order limits and take unlimited orders every month."}
+              Transfer directly to SendCart and send your payment screenshot to activate.
             </SheetDescription>
           </SheetHeader>
 
-          <div className="order-details-body" style={{ marginTop: "1rem" }}>
-            <div className="order-details-card">
-              <h4>Upgrade summary</h4>
-              <p style={{ margin: "0.25rem 0", fontSize: "14px" }}>
-                Tier: <strong>{upgradeTier === "credits" ? "50 Extra Order Credits" : "Unlimited Orders / Month"}</strong>
-              </p>
-              <p style={{ margin: "0.25rem 0", fontSize: "14px" }}>
-                Amount: <strong style={{ fontSize: "16px" }}>{upgradeTier === "credits" ? "₦500" : "₦2,000"}</strong>
-              </p>
-              <p style={{ margin: "0.5rem 0 0", color: "var(--muted-foreground)", fontSize: "12px", lineHeight: "1.5" }}>
-                {upgradeTier === "credits"
-                  ? "Your 50 extra orders will activate immediately on your vendor profile and automatically apply whenever your 30 free monthly limit is reached."
-                  : "Your shop will be switched to the Unlimited plan with infinite monthly order capacity."}
-              </p>
-            </div>
+          {upgradeTier && (
+            <div className="order-details-body" style={{ marginTop: "1rem" }}>
+              <div className="order-details-card">
+                <h4>Plan summary</h4>
+                <p style={{ margin: "0.25rem 0", fontSize: "14px" }}>
+                  Plan: <strong>{upgradeTier === "credits" ? "50 Extra Order Credits" : "Unlimited Orders / Month"}</strong>
+                </p>
+                <p style={{ margin: "0.25rem 0", fontSize: "14px" }}>
+                  Amount to transfer:{" "}
+                  <strong style={{ fontSize: "18px", color: "var(--foreground)" }}>
+                    {formatNaira(upgradeTier === "credits" ? creditPackPrice : unlimitedMonthlyPrice)}
+                  </strong>
+                </p>
+              </div>
 
-            <div style={{ display: "grid", gap: "8px", marginTop: "1.5rem" }}>
-              <Button
-                disabled={upgradeBusy}
-                onClick={() => void handleUpgradeConfirm()}
-              >
-                {upgradeBusy ? "Activating upgrade…" : `Confirm & Activate for ${upgradeTier === "credits" ? "₦500" : "₦2,000"}`} <Check />
-              </Button>
-              <Button
-                variant="outline"
-                disabled={upgradeBusy}
-                onClick={() => setUpgradeTier(null)}
-              >
-                Cancel
-              </Button>
+              {/* SendCart Official Bank Account Details */}
+              <div className="order-details-card" style={{ marginTop: "12px" }}>
+                <h4>SendCart Official Bank Details</h4>
+                <div style={{ display: "grid", gap: "8px", fontSize: "13px", marginTop: "8px" }}>
+                  <div style={{ display: "flex", justifyContent: "space-between" }}>
+                    <span style={{ color: "var(--muted-foreground)" }}>Bank:</span>
+                    <strong>{SENDCART_BILLING.bankName}</strong>
+                  </div>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                    <span style={{ color: "var(--muted-foreground)" }}>Account Number:</span>
+                    <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                      <strong style={{ fontFamily: "monospace", fontSize: "15px" }}>
+                        {SENDCART_BILLING.accountNumber}
+                      </strong>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        style={{ height: "26px", padding: "0 8px", fontSize: "11px" }}
+                        onClick={() => void copyBillingAccount()}
+                      >
+                        {billingCopied ? <Check style={{ width: 12, height: 12 }} /> : <Copy style={{ width: 12, height: 12 }} />}
+                        <span style={{ marginLeft: "4px" }}>{billingCopied ? "Copied" : "Copy"}</span>
+                      </Button>
+                    </div>
+                  </div>
+                  <div style={{ display: "flex", justifyContent: "space-between" }}>
+                    <span style={{ color: "var(--muted-foreground)" }}>Account Name:</span>
+                    <strong>{SENDCART_BILLING.accountName}</strong>
+                  </div>
+                </div>
+              </div>
+
+              {/* Payment Proof Prompt */}
+              <div className="payment-screenshot-notice" style={{ marginTop: "12px" }}>
+                <Camera aria-hidden="true" />
+                <div>
+                  <strong>Payment confirmation required:</strong>
+                  <span>Transfer the exact amount above and reply on WhatsApp with your payment receipt or screenshot to activate your store.</span>
+                </div>
+              </div>
+
+              <div style={{ display: "grid", gap: "8px", marginTop: "1.5rem" }}>
+                <Button
+                  disabled={upgradeBusy}
+                  onClick={() => void handleUpgradeConfirm()}
+                >
+                  {upgradeBusy
+                    ? "Logging request…"
+                    : `I Have Transferred ${formatNaira(upgradeTier === "credits" ? creditPackPrice : unlimitedMonthlyPrice)} — Send Receipt`}
+                  <ArrowUpRight style={{ width: 16, height: 16, marginLeft: 6 }} />
+                </Button>
+                <Button
+                  variant="outline"
+                  disabled={upgradeBusy}
+                  onClick={() => setUpgradeTier(null)}
+                >
+                  Cancel
+                </Button>
+              </div>
+
+              <small style={{ display: "block", textAlign: "center", color: "var(--muted-foreground)", fontSize: "11px", marginTop: "10px" }}>
+                Upgrades are verified by SendCart Admin and activated promptly upon receiving proof.
+              </small>
             </div>
-          </div>
+          )}
         </SheetContent>
       </Sheet>
     </main>
