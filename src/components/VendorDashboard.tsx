@@ -115,7 +115,9 @@ export function VendorDashboard() {
     stock: "",
     variants: "",
     image_url: "",
+    visible: true,
   });
+  const [productFilter, setProductFilter] = useState<"all" | "active" | "archived">("all");
   const [newZone, setNewZone] = useState("");
   const [newZoneFee, setNewZoneFee] = useState("");
   const [uploadingImage, setUploadingImage] = useState(false);
@@ -371,6 +373,15 @@ export function VendorDashboard() {
   }, [userId]);
       
   const visibleProducts = useMemo(() => products.filter((product) => product.visible), [products]);
+  const activeProductsCount = useMemo(() => products.filter((p) => p.visible).length, [products]);
+  const archivedProductsCount = useMemo(() => products.filter((p) => !p.visible).length, [products]);
+  const productLimit = profile?.plan === "power" ? Infinity : profile?.plan === "pro" ? proProductLimit : freeProductLimit;
+
+  const displayedProducts = useMemo(() => {
+    if (productFilter === "active") return products.filter((p) => p.visible);
+    if (productFilter === "archived") return products.filter((p) => !p.visible);
+    return products;
+  }, [products, productFilter]);
   const pendingOrders = orders.filter((order) => order.status === "pending_confirmation").length;
   const storeLink = typeof window === "undefined" || !profile ? "" : `${window.location.origin}/s/${profile.store_slug}`;
 
@@ -420,7 +431,17 @@ export function VendorDashboard() {
   };
 
   const resetProductForm = () => {
-    setDraftProduct({ name: "", category: "New Arrivals", description: "", price: "", compare_at_price: "", stock: "", variants: "", image_url: "" });
+    setDraftProduct({
+      name: "",
+      category: "New Arrivals",
+      description: "",
+      price: "",
+      compare_at_price: "",
+      stock: "",
+      variants: "",
+      image_url: "",
+      visible: true,
+    });
     setEditingProductId(null);
   };
 
@@ -434,25 +455,28 @@ export function VendorDashboard() {
       stock: String(product.stock),
       variants: (product.variants ?? []).filter(Boolean).join(", "),
       image_url: product.image_url,
+      visible: product.visible,
     });
     setEditingProductId(product.id);
     document.getElementById("product-editor")?.scrollIntoView({ behavior: "smooth", block: "start" });
   };
-
+  
   const saveProduct = async () => {
     if (!userId || !draftProduct.name.trim() || !draftProduct.price || !draftProduct.stock || !draftProduct.image_url.trim()) {
       toast.error("Add a name, photo link, price and stock quantity first.");
       return;
     }
-    // Enforce 8-product Starter limit on newly added products
-    if (!editingProductId && (!profile?.plan || profile?.plan === "free")) {
-      const activeCount = products.filter((p) => p.visible).length;
-      if (activeCount >= freeProductLimit) {
-        toast.error(`Starter free tier allows up to ${freeProductLimit} active products. Upgrade to Pro Merchant to add more!`);
-        setUpgradeTier("pro");
-        return;
-      }
+
+    // Auto-save to Backroom/Archive if active slots are full
+    let finalVisibility = draftProduct.visible;
+    const currentIsVisible = editingProductId ? products.find((p) => p.id === editingProductId)?.visible : false;
+    const isClaimingSlot = finalVisibility && (!editingProductId || !currentIsVisible);
+
+    if (isClaimingSlot && activeProductsCount >= productLimit) {
+      finalVisibility = false;
+      toast.info(`Active slots full (${productLimit}/${productLimit}). Saved to Backroom / Archive!`);
     }
+
     const price = Number(draftProduct.price);
     const stock = Number(draftProduct.stock);
     const compareAt = Number(draftProduct.compare_at_price);
@@ -470,6 +494,7 @@ export function VendorDashboard() {
       stock,
       variants: draftProduct.variants.split(",").map((value) => value.trim()).filter(Boolean),
       image_url: draftProduct.image_url.trim(),
+      visible: finalVisibility,
     };
     setBusy(true);
     const result = editingProductId
@@ -482,20 +507,29 @@ export function VendorDashboard() {
     }
     const saved = result.data as unknown as ShopProduct;
     setProducts((current) => editingProductId ? current.map((product) => product.id === saved.id ? saved : product) : [saved, ...current]);
-    toast.success(editingProductId ? "Product updated." : "New product added.");
+    toast.success(editingProductId ? "Product updated." : finalVisibility ? "Product live on storefront." : "Saved to Backroom / Archive.");
     resetProductForm();
   };
 
   const toggleProduct = async (product: ShopProduct) => {
     if (!userId) return;
+
+    // Guard: Prevent unhiding when all slots are in use
+    if (!product.visible && activeProductsCount >= productLimit) {
+      toast.error(`All ${productLimit} active display slots are in use. Archive an active piece or upgrade to Pro!`);
+      setUpgradeTier("pro");
+      return;
+    }
+
     const { error } = await supabase.from("products").update({ visible: !product.visible }).eq("id", product.id).eq("vendor_id", userId);
     if (error) {
       toast.error("We couldn’t update this product.");
       return;
     }
     setProducts((current) => current.map((item) => item.id === product.id ? { ...item, visible: !item.visible } : item));
+    toast.success(product.visible ? "Moved to Backroom / Archived." : "Product is now live on your shop floor!");
   };
-
+  
   const deleteProduct = async (product: ShopProduct) => {
     if (!userId || !window.confirm(`Remove ${product.name} from your catalog?`)) return;
     const { error } = await supabase.from("products").delete().eq("id", product.id).eq("vendor_id", userId);
