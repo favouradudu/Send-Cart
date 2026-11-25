@@ -851,8 +851,6 @@ export function VendorDashboard() {
             </section>
           </TabsContent>
           <TabsContent value="products" className="dashboard-tab-content">
-            <div className="dashboard-section-heading products-page-heading"><div><p className="eyebrow">Your inventory & items</p><h2>Your catalog <span>· {products.length}</span></h2></div><Button onClick={resetProductForm}><Plus /> Add product</Button></div>
-          <TabsContent value="products" className="dashboard-tab-content">
             <div className="dashboard-section-heading products-page-heading">
               <div>
                 <p className="eyebrow">Your inventory & items</p>
@@ -973,10 +971,128 @@ export function VendorDashboard() {
                   onChange={(event) => setDraftProduct({ ...draftProduct, variants: event.target.value })}
                 />
               </div>
+                <Input
+                  id="product-variants"
+                  placeholder="e.g. S, M, L  ·  128GB, 256GB  ·  30ml, 50ml, 100ml  ·  UK Used, Brand New"
+                  value={draftProduct.variants}
+                  onChange={(event) => setDraftProduct({ ...draftProduct, variants: event.target.value })}
+                />
+              </div>
+
+              {/* --- INSERTION 2: Visibility Checkbox --- */}
+              <div className="form-span-two">
+                <label className="shelf-checkbox-label">
+                  <input
+                    type="checkbox"
+                    checked={draftProduct.visible}
+                    onChange={(e) => setDraftProduct({ ...draftProduct, visible: e.target.checked })}
+                  />
+                  <span>Display live on shop floor immediately (Uses 1 active slot)</span>
+                </label>
+              </div>
               <div className="form-span-two"><label htmlFor="product-description">Product description</label><Textarea id="product-description" placeholder="Specifications, scent notes, condition, or size details" value={draftProduct.description} onChange={(event) => setDraftProduct({ ...draftProduct, description: event.target.value })} /></div>
             </div>
-            <div className="product-form-actions"><span><Upload /> Product photo uploads directly or via link.</span><Button disabled={busy} onClick={() => void saveProduct()}>{busy ? "Saving…" : editingProductId ? "Save changes" : "Add this product"} <Check /></Button></div></div>
-            <div className="vendor-product-list">{products.length ? products.map((product) => <article className={`vendor-product-row ${product.visible ? "" : "is-hidden"}`} key={product.id}><img src={product.image_url} alt="" width={68} height={82} />
+                        <div className="product-form-actions">
+              <span><Upload /> Product photo uploads directly or via link.</span>
+              <Button disabled={busy} onClick={() => void saveProduct()}>
+                {busy ? "Saving…" : editingProductId ? "Save changes" : "Add this product"} <Check />
+              </Button>
+            </div>
+          </div>
+
+          {/* --- INSERTION 3: Filter Tabs --- */}
+          <div className="product-filter-tabs">
+            <button
+              type="button"
+              className={`product-filter-btn ${productFilter === "all" ? "is-active" : ""}`}
+              onClick={() => setProductFilter("all")}
+            >
+              All Items ({products.length})
+            </button>
+            <button
+              type="button"
+              className={`product-filter-btn ${productFilter === "active" ? "is-active" : ""}`}
+              onClick={() => setProductFilter("active")}
+            >
+              Active on Shop ({activeProductsCount})
+            </button>
+            <button
+              type="button"
+              className={`product-filter-btn ${productFilter === "archived" ? "is-active" : ""}`}
+              onClick={() => setProductFilter("archived")}
+            >
+              Archived / Backroom ({archivedProductsCount})
+            </button>
+          </div>
+
+          <div className="vendor-product-list">
+            {displayedProducts.length ? (
+              displayedProducts.map((product) => (
+                <article className={`vendor-product-row ${product.visible ? "" : "is-hidden"}`} key={product.id}>
+                  <img src={product.image_url} alt="" width={68} height={82} />
+                  <div className="vendor-product-name">
+                    <span>{product.category} · {product.visible ? "Active on shop" : "Archived in backroom"}</span>
+                    <h3>{product.name}</h3>
+                    
+                    {/* Quick 2-Tap Stock Sync */}
+                    <div className="product-stock-control">
+                      <div className="stock-stepper">
+                        <button
+                          type="button"
+                          className="stock-step-btn"
+                          aria-label={`Reduce stock for ${product.name}`}
+                          disabled={product.stock <= 0}
+                          onClick={() => void updateProductStock(product, -1)}
+                        >
+                          <Minus />
+                        </button>
+                        <span className={`stock-count ${product.stock === 0 ? "is-zero" : ""}`}>
+                          {product.stock === 0 ? "Sold Out" : `${product.stock} in stock`}
+                        </span>
+                        <button
+                          type="button"
+                          className="stock-step-btn"
+                          aria-label={`Increase stock for ${product.name}`}
+                          onClick={() => void updateProductStock(product, 1)}
+                        >
+                          <Plus />
+                        </button>
+                      </div>
+
+                      <button
+                        type="button"
+                        className={`stock-soldout-btn ${product.stock === 0 ? "is-soldout" : ""}`}
+                        onClick={() =>
+                          void updateProductStock(
+                            product,
+                            product.stock === 0 ? { set: 5 } : { set: 0 }
+                          )
+                        }
+                      >
+                        {product.stock === 0 ? "Restock (+5)" : "Mark Sold Out"}
+                      </button>
+
+                      <small className="product-variants-note">
+                        · {product.variants.join(", ") || "Standard"}
+                      </small>
+                    </div>
+                  </div>
+                  <strong>{formatNaira(product.price)}</strong>
+                  <Button variant="ghost" size="icon" aria-label={`Edit ${product.name}`} onClick={() => editProduct(product)}><Settings2 /></Button>
+                  <Button variant="ghost" size="icon" aria-label={product.visible ? `Hide ${product.name}` : `Show ${product.name}`} onClick={() => void toggleProduct(product)}>{product.visible ? <EyeOff /> : <Eye />}</Button>
+                  <Button variant="ghost" size="icon" aria-label={`Delete ${product.name}`} onClick={() => void deleteProduct(product)}><Trash2 /></Button>
+                </article>
+              ))
+            ) : (
+              <div className="empty-dashboard-note">
+                {productFilter === "active"
+                  ? "No active products on the shop floor."
+                  : productFilter === "archived"
+                  ? "No archived products in the backroom."
+                  : "No products yet — add your first one above."}
+              </div>
+            )}
+          </div>
               <div className="vendor-product-name">
                <span>{product.category}{product.visible ? "" : " · Hidden"}</span>
                <h3>{product.name}</h3>
