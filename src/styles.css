@@ -1803,3 +1803,82 @@
   width: 13px;
   height: 13px;
 }
+
+/* Shelf Management & Slot Usage */
+.shelf-status-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  background: var(--muted);
+  border: 1px solid var(--border);
+  padding: 12px 16px;
+  margin-bottom: 16px;
+}
+.shelf-status-info {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  font-size: 11px;
+}
+.shelf-badge {
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-size: 9px;
+  font-weight: 700;
+  padding: 2px 8px;
+  background: var(--foreground);
+  color: var(--background);
+}
+.shelf-status-info strong {
+  font-family: var(--font-sans);
+  font-size: 13px;
+  font-weight: 700;
+}
+.shelf-subtext {
+  color: var(--muted-foreground);
+  font-size: 11px;
+}
+.product-filter-tabs {
+  display: flex;
+  gap: 8px;
+  margin-top: 18px;
+  margin-bottom: 8px;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 10px;
+  overflow-x: auto;
+}
+.product-filter-btn {
+  background: none;
+  border: 1px solid transparent;
+  font-size: 11px;
+  font-weight: 500;
+  padding: 5px 12px;
+  cursor: pointer;
+  color: var(--muted-foreground);
+  transition: all 0.15s ease;
+}
+.product-filter-btn:hover {
+  color: var(--foreground);
+}
+.product-filter-btn.is-active {
+  background: var(--foreground);
+  color: var(--background);
+  font-weight: 600;
+}
+.shelf-checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+  cursor: pointer;
+  user-select: none;
+  margin-top: 4px;
+}
+.shelf-checkbox-label input[type="checkbox"] {
+  width: 15px;
+  height: 15px;
+  cursor: pointer;
+}
