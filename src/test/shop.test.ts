@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { buildWhatsAppOrderMessage, creditPackCount, creditPackPrice, formatNaira, isFreeOrderBlocked, monthlyOrderLimit, unlimitedMonthlyPrice } from "@/lib/shop";
+import { buildWhatsAppOrderMessage, creditPackCount, creditPackPrice, formatNaira, isFreeOrderBlocked, monthlyOrderLimit, powerMonthlyPrice,
+  proMonthlyPrice, unlimitedMonthlyPrice } from "@/lib/shop";
 
 describe("Nigerian shop order rules", () => {
   it("formats naira totals with Nigerian thousands separators", () => {
