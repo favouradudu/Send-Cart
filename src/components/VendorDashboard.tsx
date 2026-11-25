@@ -54,9 +54,6 @@ import {
   type ShopProfile,
 } from "@/lib/shop";
 
-// Change upgradeTier state from "credits" | "unlimited" to support all tiers:
-const [upgradeTier, setUpgradeTier] = useState<"credits" | "pro" | "power" | null>(null);
-
 type OrderStatus = "pending_confirmation" | "paid" | "dispatched" | "delivered";
 type OrderRecord = Omit<(typeof DEMO_ORDERS)[number], "status"> & { id: string; status: OrderStatus };
 type VendorAuthMode = "signin" | "signup";
@@ -122,7 +119,7 @@ export function VendorDashboard() {
   const [newZone, setNewZone] = useState("");
   const [newZoneFee, setNewZoneFee] = useState("");
   const [uploadingImage, setUploadingImage] = useState(false);
-  const [upgradeTier, setUpgradeTier] = useState<"credits" | "unlimited" | null>(null);
+  const [upgradeTier, setUpgradeTier] = useState<"credits" | "pro" | "power" | null>(null);
   const [upgradeBusy, setUpgradeBusy] = useState(false);
 
   const [selectedOrder, setSelectedOrder] = useState<OrderRecord | null>(null);
