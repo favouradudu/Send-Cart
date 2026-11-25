@@ -852,6 +852,34 @@ export function VendorDashboard() {
           </TabsContent>
           <TabsContent value="products" className="dashboard-tab-content">
             <div className="dashboard-section-heading products-page-heading"><div><p className="eyebrow">Your inventory & items</p><h2>Your catalog <span>· {products.length}</span></h2></div><Button onClick={resetProductForm}><Plus /> Add product</Button></div>
+          <TabsContent value="products" className="dashboard-tab-content">
+            <div className="dashboard-section-heading products-page-heading">
+              <div>
+                <p className="eyebrow">Your inventory & items</p>
+                <h2>Your catalog <span>· {products.length}</span></h2>
+              </div>
+              <Button onClick={resetProductForm}><Plus /> Add product</Button>
+            </div>
+
+            {/* PASTE HERE: Shelf Slot Usage Banner */}
+            <div className="shelf-status-banner">
+              <div className="shelf-status-info">
+                <span className="shelf-badge">
+                  {profile?.plan === "power" ? "Power Store" : profile?.plan === "pro" ? "Pro Merchant" : "Free Starter"}
+                </span>
+                <strong>
+                  {activeProductsCount} / {profile?.plan === "power" ? "∞" : productLimit} Active Slots in Use
+                </strong>
+                <span className="shelf-subtext">
+                  · {archivedProductsCount} piece{archivedProductsCount === 1 ? "" : "s"} archived in backroom
+                </span>
+              </div>
+              {(!profile?.plan || profile?.plan === "free") && (
+                <Button size="sm" variant="outline" onClick={() => setUpgradeTier("pro")}>
+                  <Sparkles /> Upgrade to 50 Slots (₦4,500)
+                </Button>
+              )}
+            </div>
             <div className="product-editor" id="product-editor"><div className="product-editor-heading"><div><p className="eyebrow">{editingProductId ? "Update listing" : "New listing"}</p><h3>{editingProductId ? "Edit product" : "Add to your shop"}</h3></div>{editingProductId && <Button variant="ghost" size="icon" aria-label="Cancel editing" onClick={resetProductForm}><X /></Button>}</div><div className="product-form-grid"><div className="form-span-two"><label htmlFor="product-name">Product name</label><Input id="product-name" placeholder="e.g. iPhone 13 Pro, Amber Vanilla Oil, or Linen Set" value={draftProduct.name} onChange={(event) => setDraftProduct({ ...draftProduct, name: event.target.value })} /></div><div><label htmlFor="product-category">Category / Tag</label><select className="dashboard-select" id="product-category" value={draftProduct.category} onChange={(event) => setDraftProduct({ ...draftProduct, category: event.target.value })}><option>Best Sellers</option><option>New Arrivals</option><option>Sale</option></select></div><div><label htmlFor="product-price">Price · ₦</label><Input id="product-price" type="number" min="0" inputMode="numeric" placeholder="48500" value={draftProduct.price} onChange={(event) => setDraftProduct({ ...draftProduct, price: event.target.value })} /></div><div><label htmlFor="product-sale-price">Original price, if on sale</label><Input id="product-sale-price" type="number" min="0" inputMode="numeric" placeholder="Optional" value={draftProduct.compare_at_price} onChange={(event) => setDraftProduct({ ...draftProduct, compare_at_price: event.target.value })} /></div><div><label htmlFor="product-stock">Available stock / quantity</label><Input id="product-stock" type="number" min="0" inputMode="numeric" placeholder="5" value={draftProduct.stock} onChange={(event) => setDraftProduct({ ...draftProduct, stock: event.target.value })} /></div>
               <div className="form-span-two">
                 <label htmlFor="product-image">Product photo</label>
