@@ -17,7 +17,7 @@ describe("App routing", () => {
 
   it("matches the named public shop page", () => {
     const router = createRouter({ routeTree, context: { queryClient: new QueryClient() } });
-    const matches = router.matchRoutes("/s/aura-threads");
+    const matches = router.matchRoutes("/s/sendcart");
 
     expect(matches.at(-1)?.routeId).toBe("/s/$storeSlug");
   });
