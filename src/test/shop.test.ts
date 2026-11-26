@@ -31,7 +31,7 @@ describe("Nigerian shop order rules", () => {
       total: 51000,
       bankName: "Access Bank",
       bankAccount: "0123456789",
-      bankAccountName: "Aura Threads",
+      bankAccountName: "SendCart Showcase",
     });
 
     expect(message).toContain("SC-ORD-1234ABCD");
