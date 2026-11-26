@@ -36,7 +36,7 @@ export type ShopProfile = {
   store_theme?: StoreTheme;
 };
 
-export const DEMO_SLUG = "aura-threads";
+export const DEMO_SLUG = "sendcart";
 export const DEMO_VENDOR_PHONE = "2348161323856";
 
 export function getDeliveryFeeLabel(zoneName: string, fee: number): string {
@@ -58,14 +58,14 @@ export const DEMO_PROFILE: ShopProfile = {
   id: "demo-send-cart",
   vendor_code: "SC-VND-00101",
   store_slug: DEMO_SLUG,
-  store_name: "send cart",
+  store_name: "SendCart Showcase",
   bio: "Gadgets, luxury fragrances, apparel & sneakers — ordered direct on WhatsApp with zero middlemen.",
   avatar_url: "",
   whatsapp_phone: DEMO_VENDOR_PHONE,
   instagram_handle: "sendcart.ng",
   bank_name: "Access Bank · demo",
   bank_account: "0000000000",
-  bank_account_name: "send cart (demo)",
+  bank_account_name: "SendCart Showcase",
   delivery_zones: {
     "Dispatch Rider (Pay rider directly on delivery)": { fee: 0 },
     "Motor Park Waybill (Pay driver at park upon collection)": { fee: 0 },
