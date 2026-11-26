@@ -73,8 +73,22 @@ const SENDCART_BILLING = {
   supportWhatsApp: "2347014020231",
 };
 
+function getTimeGreeting(): string {
+  const hour = new Date().getHours();
+  if (hour >= 5 && hour < 12) return "Good morning";
+  if (hour >= 12 && hour < 17) return "Good afternoon";
+  if (hour >= 17 && hour < 22) return "Good evening";
+  return "Good night";
+}
+
 export function VendorDashboard() {
   const [userId, setUserId] = useState<string | null>(null);
+  const [greeting, setGreeting] = useState<string>("Good day");
+
+  useEffect(() => {
+    setGreeting(getTimeGreeting());
+  }, []);
+
   const [authMode, setAuthMode] = useState<VendorAuthMode>("signin");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -802,7 +816,7 @@ export function VendorDashboard() {
               </span>
             )}
           </div>
-          <h1>Good morning, <em>{profile.store_name}.</em></h1>
+          <h1>{greeting}, <em>{profile.store_name}.</em></h1>
           <p className="dashboard-welcome-note">Here’s what’s happening with your shop.</p>
         </div>
         <Button className="share-shop-button" onClick={() => void copyStoreLink()}><Copy /> Copy shop link <ArrowUpRight /></Button>
