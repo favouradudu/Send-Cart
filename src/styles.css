@@ -131,7 +131,12 @@
 .header-cart { position:relative; }
 .header-cart svg { width:19px;height:19px; }
 .bag-count { position:absolute; top:0; right:0; display:grid; place-items:center; width:15px;height:15px;border-radius:50%;background:var(--foreground);color:var(--background);font-size:9px; }
-.editorial-hero { min-height:620px; height:min(690px,calc(100svh - 104px)); display:grid; grid-template-columns:1fr .92fr; position:relative; max-width:1600px; margin:auto; padding:0 clamp(32px,9.3vw,145px); gap:clamp(40px,9vw,140px); align-items:center; overflow:hidden; }
+.editorial-hero { position:relative; max-width:1200px; margin:0 auto; padding:44px clamp(20px,5vw,60px) 16px; }
+.editorial-copy { max-width:760px; padding:0; z-index:1; }
+.signature-meta { display:inline-flex; flex-direction:column; gap:2px; }
+.store-name-text { display:inline-flex; align-items:center; gap:6px; font-weight:600; font-size:15px; }
+.hero-trust-badges { display:flex; flex-wrap:wrap; gap:8px; margin-top:20px; }
+.trust-pill { display:inline-flex; align-items:center; gap:6px; padding:5px 12px; border-radius:999px; background:var(--muted); font-size:11px; font-weight:500; color:var(--muted-foreground); border:1px solid var(--border); }
 .editorial-copy { padding:30px 0 47px; z-index:1; }
 .store-signature { display:flex; align-items:center; gap:10px; margin-bottom:48px; font-size:11px;font-weight:600; }
 .signature-avatar { display:grid;place-items:center;width:34px;height:34px;border-radius:50%;background:var(--foreground);color:var(--background);font-family:var(--font-display);font-size:19px; }
@@ -456,12 +461,14 @@
   .dashboard-link { gap:3px;font-size:9px; }
   .dashboard-link svg { width:12px;height:12px; }
   .header-cart { width:34px;height:34px; }
-  .editorial-hero { display:flex;flex-direction:column;align-items:stretch;justify-content:flex-start;gap:0;height:auto;min-height:0;padding:0 0 0; }
-  .editorial-copy { order:2;padding:28px 22px 23px; }
-  .store-signature { margin-bottom:21px;font-size:10px; }
-  .signature-avatar { width:30px;height:30px; }
-  .editorial-copy .eyebrow { margin:0; font-size:8px; }
-  .editorial-copy h1 { margin:12px 0 10px;font-size:54px;line-height:.91; }
+  .editorial-hero { padding:24px 18px 12px; }
+  .editorial-copy { padding:0; }
+  .store-signature { margin-bottom:16px; font-size:11px; }
+  .signature-avatar { width:32px; height:32px; }
+  .editorial-copy .eyebrow { margin:0; font-size:9px; }
+  .editorial-copy h1 { margin:10px 0 8px; font-size:42px; line-height:0.95; }
+  .hero-trust-badges { gap:6px; margin-top:14px; }
+  .trust-pill { font-size:10px; padding:4px 9px; }
   .hero-description { max-width:290px;margin:0;font-size:11px; }
   .text-arrow-link { margin-top:16px;font-size:10px; }
   .hero-press-line { margin-top:24px;font-size:8px;gap:7px; }
@@ -1285,75 +1292,6 @@
   font-size: 11.5px;
   line-height: 1.4;
   color: var(--muted-foreground, #555555);
-}
-
-/* Multi-Niche Hero Collage */
-.hero-collage-wrap {
-  position: relative;
-  width: min(100%, 470px);
-  align-self: center;
-  justify-self: end;
-}
-
-.hero-collage-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
-  border-radius: 4px;
-}
-
-.hero-collage-tile {
-  position: relative;
-  aspect-ratio: 1 / 1;
-  overflow: hidden;
-  background: var(--secondary);
-  border: 1px solid var(--border);
-  display: block;
-  text-decoration: none;
-  border-radius: 2px;
-}
-
-.hero-collage-tile img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  transition: transform 0.3s ease;
-}
-
-.hero-collage-tile:hover img {
-  transform: scale(1.05);
-}
-
-.hero-collage-tag {
-  position: absolute;
-  bottom: 8px;
-  left: 8px;
-  right: 8px;
-  background: rgba(0, 0, 0, 0.72);
-  color: #ffffff;
-  font-size: 10px;
-  font-weight: 500;
-  padding: 4px 8px;
-  border-radius: 9999px;
-  backdrop-filter: blur(4px);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  letter-spacing: 0.02em;
-}
-
-@media (max-width: 640px) {
-  .hero-collage-wrap {
-    order: 1;
-    width: 100%;
-  }
-  .hero-collage-tag {
-    font-size: 9px;
-    padding: 3px 6px;
-    bottom: 6px;
-    left: 6px;
-    right: 6px;
-  }
 }
 
 /* Legal Pages (Terms & Privacy) */
