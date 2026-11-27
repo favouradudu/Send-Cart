@@ -320,71 +320,34 @@ export function Storefront({ storeSlug }: { storeSlug: string }) {
         <section className="editorial-hero" id="our-note">
           <div className="editorial-copy">
             <div className="store-signature">
-              <span className="signature-avatar">A</span>
-              <span>{profile.store_name}<span className="verified-marker" title="Seller verified"><ShieldCheck /></span></span>
-              <span className="signature-location">Lagos, Nigeria</span>
+              <span className="signature-avatar">
+                {profile.store_name?.charAt(0)?.toUpperCase() || "S"}
+              </span>
+              <div className="signature-meta">
+                <span className="store-name-text">
+                  {profile.store_name}
+                  <span className="verified-marker" title="Seller verified">
+                    <ShieldCheck />
+                  </span>
+                </span>
+                <span className="signature-location">Lagos, Nigeria</span>
+              </div>
             </div>
             <p className="eyebrow"><span /> Verified social commerce · Direct WhatsApp orders</p>
             <h1>Good things,<br /><em>meant to be ordered.</em></h1>
             <p className="hero-description">{profile.bio}</p>
-            <a className="text-arrow-link" href="#collection">Browse the catalog <ArrowDownRight aria-hidden="true" /></a>
-            <div className="hero-press-line">
-              <span>Gadgets & Tech</span>
-              <i />
-              <span>Fragrance & Beauty</span>
-              <i />
-              <span>Fashion & Sneakers</span>
+            
+            <div className="hero-trust-badges">
+              <span className="trust-pill">⚡ Next-Day Lagos Dispatch</span>
+              <span className="trust-pill">🛡️ Direct Bank Transfer</span>
+              <span className="trust-pill">💬 Instant WhatsApp Order</span>
             </div>
           </div>
-          <div className="hero-collage-wrap">
-            <div className="hero-collage-grid">
-              <a href="#collection" className="hero-collage-tile">
-                <img
-                  src="https://images.unsplash.com/photo-1592750475338-74b7b21085ab?auto=format&fit=crop&w=600&q=80"
-                  alt="Gadgets & Phones"
-                  loading="eager"
-                />
-                <span className="hero-collage-tag">Gadgets · ₦450k</span>
-              </a>
-              <a href="#collection" className="hero-collage-tile">
-                <img
-                  src="https://images.unsplash.com/photo-1592945403244-b3fbafd7f539?auto=format&fit=crop&w=600&q=80"
-                  alt="Luxury Fragrance"
-                  loading="eager"
-                />
-                <span className="hero-collage-tag">Fragrance · ₦18.5k</span>
-              </a>
-              <a href="#collection" className="hero-collage-tile">
-                <img
-                  src="/images/aura-emerald-set.jpg"
-                  alt="Relaxed Linen Set"
-                  loading="eager"
-                />
-                <span className="hero-collage-tag">Apparel · ₦48.5k</span>
-              </a>
-              <a href="#collection" className="hero-collage-tile">
-                <img
-                  src="https://images.unsplash.com/photo-1595950653106-6c9ebd614d3a?auto=format&fit=crop&w=600&q=80"
-                  alt="Retro Sneakers"
-                  loading="eager"
-                />
-                <span className="hero-collage-tag">Footwear · ₦38k</span>
-              </a>
-            </div>
-            <div className="image-caption">
-              <span>01 — 04 Top Categories</span>
-              <span>Direct seller orders on WhatsApp</span>
-            </div>
-            <div className="image-note">SEND<br />CART<br />DIRECT</div>
-          </div>
+
           <a className="floating-social" href={`https://instagram.com/${profile.instagram_handle}`} target="_blank" rel="noreferrer" aria-label={`Visit ${profile.store_name} on Instagram`}><Instagram /></a>
         </section>
 
         <section className="collection-section" id="collection">
-          <div className="section-intro">
-            <div><p className="eyebrow"><span /> The good things</p><h2>A little of what<br />you <em>love.</em></h2></div>
-            <p>Carefully selected items.<br />Direct from the vendor to you.</p>
-          </div>
 
           {/* Quick Search Bar */}
           <div className="storefront-search-wrap">
